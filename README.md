@@ -6,13 +6,11 @@ A library for PIV Uncertainty Quantification.
 
 ## Description
 
-This package contains python implementations of uncertainty quantification (UQ) for Particle Image Velocimetry (PIV).  
+This package contains python implementations of uncertainty quantification (UQ) for Particle Image Velocimetry (PIV). Implements:
 
-Techniques:
-
-* Python implementation of: Sciacchitano, A., Wieneke, B., & Scarano, F. (2013). PIV uncertainty quantification by image matching.
+1. Python implementation of: Sciacchitano, A., Wieneke, B., & Scarano, F. (2013). PIV uncertainty quantification by image matching.
 *Measurement Science and Technology, 24* (4). [https://doi.org/10.1088/0957-0233/24/4/045302](https://doi.org/10.1088/0957-0233/24/4/045302). [[piv.de](http://piv.de/uncertainty/)]
-* Iterative Lucas-Kanade based disparity estimation. [[scikit-image](https://scikit-image.org/docs/dev/api/skimage.registration.html#skimage.registration.optical_flow_ilk)]
+2. Iterative Lucas-Kanade based disparity estimation. [[scikit-image](https://scikit-image.org/docs/dev/api/skimage.registration.html#skimage.registration.optical_flow_ilk)]
 
 ## Installation
 
