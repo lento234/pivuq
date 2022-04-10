@@ -1,6 +1,6 @@
 # PIV-UQ
 
-A library for PIV Uncertainty Quantification. 
+A library for PIV Uncertainty Quantification.
 
 `Note: Primary aim is to implement UQ algorithms for PIV techniques. Future goals include possible extensions to other domains including but not limited to optical flow and BOS.`
 
