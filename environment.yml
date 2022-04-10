@@ -1,0 +1,12 @@
+# Development python environment yaml file
+name: piv-uq
+dependencies:
+  - pip
+  - python=3.9
+  - pip:
+    - ipython
+    - jupyterlab
+    - matplotlib
+    - poetry
+    - pre-commit
+    - pytest
