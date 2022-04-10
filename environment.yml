@@ -1,5 +1,5 @@
-# Development python environment yaml file
-name: piv-uq
+# Development python environment
+name: pivuq
 dependencies:
   - pip
   - python=3.9
