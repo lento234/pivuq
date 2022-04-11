@@ -14,9 +14,7 @@ Welcome to pivuq's documentation!
    :caption: Contents:
 
    usage.rst
-
    api.rst
-
 
 
 Indices and tables
