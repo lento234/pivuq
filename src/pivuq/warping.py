@@ -21,14 +21,15 @@ def interpolate_to_pixel(U, imshape, kind="linear"):
     u, v = U
     nr, nc = u.shape
 
-    ws = imshape[0] / nr
+    ws_x = int(np.round(imshape[0] / nr))
+    ws_y = int(np.round(imshape[1] / nc))
 
-    x, y = np.arange(nr) * ws + ws / 2, np.arange(nc) * ws + ws / 2
+    x, y = np.arange(nr) * ws_x + ws_x // 2, np.arange(nc) * ws_y + ws_y / 2
     xi, yi = np.arange(imshape[0]), np.arange(imshape[1])
 
     # Interpolate to pixel level
-    u_px = spinterp.interp2d(x, y, u, kind=kind)(xi, yi)
-    v_px = spinterp.interp2d(x, y, v, kind=kind)(xi, yi)
+    u_px = spinterp.interp2d(y, x, u, kind=kind)(yi, xi)
+    v_px = spinterp.interp2d(y, x, v, kind=kind)(yi, xi)
 
     return np.stack((u_px, v_px))
 
