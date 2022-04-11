@@ -15,8 +15,7 @@ def ilk(
     warp_order=1,
     warp_nsteps=5,
 ):
-    r"""Disparity map calculation using iterative Lucas Kanade ("ilk") or PIV UQ approach, Sciacchitano et al. (2013)
-    [1]_.
+    r"""Disparity map calculation using iterative Lucas Kanade ("ilk").
 
     Parameters
     ----------
@@ -96,6 +95,6 @@ def sws():
     References
     ----------
     .. [1] Sciacchitano, A., Wieneke, B., & Scarano, F. (2013). PIV uncertainty quantification by image matching.
-    Measurement Science and Technology, 24 (4). :DOI:`10.1088/0957-0233/24/4/045302`
+        Measurement Science and Technology, 24 (4). https://doi.org/10.1088/0957-0233/24/4/045302
     """
     raise NotImplementedError("Not implemented yet.")
