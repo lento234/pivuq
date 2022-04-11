@@ -3,40 +3,58 @@ import scipy.interpolate as spinterp
 import skimage
 
 
-def warp_skimage(I, U, coords, order=1, mode="edge") -> np.ndarray:
-    """Warp image frame pixel-wise using skimage.transform.warp
+def warp_skimage(frame, U, coords, order=1, mode="edge") -> np.ndarray:
+    """Warp image frame pixel-wise using `skimage.transform.warp`.
 
-    Args:
-        I (np.ndarray): image frame.
-        U (np.ndarray): pixel-wise 2D velocity field.
-        coords (np.ndarray): 2D image coordinates (row, cols).
-        order (int, optional): The order of interpolation. The order has to be in the range 0-5. Defaults to 1.
-        mode (str, optional): Points outside the boundaries of the input are filled according to the given mode. Defaults to "edge".
+    Parameters
+    ----------
+    frame : np.ndarray
+        image frame.
+    U : np.ndarray
+        pixel-wise 2D velocity field.
+    coords : np.ndarray
+        2D image coordinates (row, cols).
+    order : 1-5, default: 1
+        The order of interpolation for `skimage.transform.warp`.
+    mode: {"constant", "edge", "symmetric", "reflect", "wrap"}, default: "edge"
+        Points outside the boundaries of the input are filled according to the given mode.
 
-    Returns:
-        np.ndarray: warped image frame
+    Returns
+    -------
+    np.ndarray
+        Warped image frame
+
+    See Also
+    --------
+    skimage.transform.warp : Warp an image according to a given coordinate transformation.
     """
     row_coords, col_coords = coords
     # Warp
     u, v = U
 
     warped_frame = skimage.transform.warp(
-        I, np.array([row_coords - v, col_coords - u]), order=order, mode=mode
+        frame, np.array([row_coords - v, col_coords - u]), order=order, mode=mode
     )
 
     return warped_frame
 
 
 def interpolate_to_pixel(U, imshape, kind="linear") -> np.ndarray:
-    """Interpolate velocity field to pixel level
+    """Interpolate velocity field to pixel level.
 
-    Args:
-        U (np.ndarray): Sparse 2D velocity field.
-        imshape (tuple): Image frame dimension (rows, cols).
-        kind (str, optional): The kind of spline interpolation to use. Defaults to "linear".
+    Parameters
+    ----------
+    U : np.ndarray
+        Sparse 2D velocity field.
+    imshape: tuple
+        Image frame dimension (rows, cols).
+    kind : {"linear", "cubic", "quintic"}, default: "linear"
+        The kind of spline interpolation for scipy.interpolation.interp2d`
 
-    Returns:
-        np.ndarray: Pixel-wise 2D velocity field.
+    Returns
+    -------
+    np.ndarray
+        Pixel-wise 2D velocity field.
     """
     # Velocity components
     u, v = U
@@ -56,29 +74,44 @@ def interpolate_to_pixel(U, imshape, kind="linear") -> np.ndarray:
 
 
 def warp(
-    image_pair, U, direction="center", upsample_kind="linear", order=1, nsteps=5
+    image_pair,
+    U,
+    velocity_upsample_kind="linear",
+    direction="center",
+    nsteps=5,
+    order=1,
 ) -> np.ndarray:
     r"""Warp image pair pixel-wise to each other using `skimage.transform.warp`
 
-    Args:
-        image_pair (np.ndarray): Image pairs ($\mathbf{I} = (I_0, I_1)^{\top}$) (2 x rows x cols).
-        U (np.ndarray): Sparse or dense 2D velocity field ($\mathbf{U} = (u, v)^{\top}$) (2 x U_rows x U_cols).
-        direction (str, optional): Warping direction. Defaults to "center".
-        upsample_kind (str, optional): Velocity upsampling kind for spline interpolation in `interp2d`. Defaults to "linear".
-        order (int, optional): The order of interpolation. The order has to be in the range 0-5. Defaults to 1.
-        nsteps (int, optional): Number of sub-steps to use for warping to improve accuracy. Defaults to 5.
+    Parameters
+    ----------
+    image_pair : np.ndarray
+        Image pairs :math:`\mathbf{I} = (I_0, I_1)^{\top}` of size (2 x rows x cols).
+    U : np.ndarray
+        Sparse or dense 2D velocity field :math:`\mathbf{U} = (u, v)^{\top}` of size (2 x U_rows x U_cols).
+    warp_direction : {"forward", "center", "backward"}, default: "center"
+        Warping warp_direction.
+    velocity_upsample_kind : {"linear", "cubic", "quintic"}, optional
+        Velocity upsampling kind for spline interpolation `scipy.interpolation.interp2d`.
+        Default is "linear".
+    nsteps : int, default: 5
+        Number of sub-steps to use for warping to improve accuracy.
+    order : 1-5, default: 1
+        The order of interpolation for `skimage.transform.warp`.
 
-    Returns:
-        np.ndarray: Warped image pair
+    Returns
+    -------
+    np.ndarray
+        Warped image pair :math:`\hat{\mathbf{I}} = (\hat{I}_0, \hat{I}_1)^{\top}` of size (2 x rows x cols).
     """
 
     # warping image pairs
-    I1hat, I2hat = image_pair
-    nr, nc = I1hat.shape
+    warped_frame_a, warped_frame_b = image_pair
+    nr, nc = warped_frame_a.shape
 
     # interpolate velocity to pixel level
     if U.shape[1] != nr or U.shape[2] != nc:
-        U = interpolate_to_pixel(U, I1hat.shape, kind=upsample_kind)
+        U = interpolate_to_pixel(U, warped_frame_a.shape, kind=velocity_upsample_kind)
     U_substep = U / nsteps
 
     # generate mapping grid
@@ -87,11 +120,19 @@ def warp(
     # warp images in nsteps
     for istep in range(nsteps):
         if direction == "forward":
-            I1hat = warp_skimage(I1hat, U_substep, image_coords, order=order)
+            warped_frame_a = warp_skimage(
+                warped_frame_a, U_substep, image_coords, order=order
+            )
         elif direction == "backward":
-            I2hat = warp_skimage(I2hat, -U_substep, image_coords, order=order)
+            warped_frame_b = warp_skimage(
+                warped_frame_b, -U_substep, image_coords, order=order
+            )
         elif direction == "center":
-            I1hat = warp_skimage(I1hat, 0.5 * U_substep, image_coords, order=order)
-            I2hat = warp_skimage(I2hat, -0.5 * U_substep, image_coords, order=order)
+            warped_frame_a = warp_skimage(
+                warped_frame_a, 0.5 * U_substep, image_coords, order=order
+            )
+            warped_frame_b = warp_skimage(
+                warped_frame_b, -0.5 * U_substep, image_coords, order=order
+            )
 
-    return np.stack((I1hat, I2hat))
+    return np.stack((warped_frame_a, warped_frame_b))
