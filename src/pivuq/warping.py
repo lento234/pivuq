@@ -49,7 +49,7 @@ def interpolate_to_pixel(U, imshape, kind="linear") -> np.ndarray:
     imshape: tuple
         Image frame dimension (rows, cols).
     kind : {"linear", "cubic", "quintic"}, default: "linear"
-        The kind of spline interpolation for scipy.interpolation.interp2d`
+        The kind of spline interpolation for `scipy.interpolation.interp2d`.
 
     Returns
     -------
@@ -81,7 +81,7 @@ def warp(
     nsteps=5,
     order=1,
 ) -> np.ndarray:
-    r"""Warp image pair pixel-wise to each other using `skimage.transform.warp`
+    r"""Warp image pair pixel-wise to each other using `skimage.transform.warp`.
 
     Parameters
     ----------
@@ -91,9 +91,8 @@ def warp(
         Sparse or dense 2D velocity field :math:`\mathbf{U} = (u, v)^{\top}` of size (2 x U_rows x U_cols).
     warp_direction : {"forward", "center", "backward"}, default: "center"
         Warping warp_direction.
-    velocity_upsample_kind : {"linear", "cubic", "quintic"}, optional
+    velocity_upsample_kind : {"linear", "cubic", "quintic"}, default: "linear"
         Velocity upsampling kind for spline interpolation `scipy.interpolation.interp2d`.
-        Default is "linear".
     nsteps : int, default: 5
         Number of sub-steps to use for warping to improve accuracy.
     order : 1-5, default: 1
