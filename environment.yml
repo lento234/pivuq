@@ -10,3 +10,4 @@ dependencies:
     - poetry
     - pre-commit
     - pytest
+    - -r docs/requirements.txt # documentation
