@@ -6,6 +6,7 @@ authors = ["MrLento234 <lento.manickathan@gmail.com>"]
 license = "MIT"
 readme = "README.md"
 homepage = "https://github.com/lento234/pivuq"
+documentation = "https://pivuq.readthedocs.io"
 keywords = ["PIV", "UQ"]
 classifiers = [
     "Operating System :: POSIX :: Linux",
