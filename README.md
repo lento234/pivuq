@@ -1,4 +1,9 @@
-# PIV-UQ: PIV Uncertainty Quantification
+# PIVUQ: PIV Uncertainty Quantification
+
+[![Docs](https://img.shields.io/readthedocs/pivuq?style=flat-square&labelColor=000000)](https://pivuq.readthedocs.io/)
+[![PyPi Version](https://img.shields.io/pypi/v/pivuq.svg?style=flat-square&labelColor=000000)](https://pypi.org/project/pivuq/)
+[![PyPi Python versions](https://img.shields.io/pypi/pyversions/pivuq.svg?style=flat-square&labelColor=000000)](https://pypi.org/project/pivuq/)
+[![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square&labelColor=000000)](#license)
 
 `This project is still under active development.`
 
@@ -18,6 +23,20 @@ Install using pip
 
 ```bash
 pip install pivuq
+```
+
+### Development mode
+
+Initialize [`conda`](https://docs.conda.io/projects/conda/en/latest/user-guide/index.html) environment
+
+```bash
+conda env create -f environment.yml
+```
+
+Install packages using [`poetry`](https://python-poetry.org/docs/):
+
+```bash
+poetry install
 ```
 
 ## How to cite
