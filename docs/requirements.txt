@@ -1,4 +1,7 @@
+ipykernel
+matplotlib
 nbsphinx
-sphinx
+pandoc
+Sphinx
 sphinx_copybutton
 sphinx_rtd_theme

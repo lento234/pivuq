@@ -22,7 +22,7 @@ import pkg_resources
 
 # -- Project information -----------------------------------------------------
 
-project = "pivuq"
+project = "PIVUQ"
 copyright = f"{datetime.datetime.today().year}, Lento Manickathan"
 author = "Lento Manickathan"
 
