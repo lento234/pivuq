@@ -13,8 +13,8 @@ This package contains python implementations of uncertainty quantification (UQ) 
 
 List of approachs:
 
-- [x]: [`pivuq.diparity.ilk`](/src/pivuq/disparity.py#L7): Iterative Lucas-Kanade based disparity estimation. [[scikit-image](https://scikit-image.org/docs/dev/api/skimage.registration.html#skimage.registration.optical_flow_ilk)]
-- [ ]: [`pivuq.disparity.sws`](/src/pivuq/disparity.py#L87): Python implementation of Sciacchitano, A., Wieneke, B., & Scarano, F. (2013). PIV uncertainty quantification by image matching. *Measurement Science and Technology, 24* (4). [https://doi.org/10.1088/0957-0233/24/4/045302](https://doi.org/10.1088/0957-0233/24/4/045302). [[piv.de](http://piv.de/uncertainty/)]
+- [x]: [`pivuq.diparity.ilk`](https://pivuq.readthedocs.io/en/latest/api/disparity.html#pivuq.disparity.ilk): Iterative Lucas-Kanade based disparity estimation. [[scikit-image](https://scikit-image.org/docs/dev/api/skimage.registration.html#skimage.registration.optical_flow_ilk)]
+- [ ]: [`pivuq.disparity.sws`](https://pivuq.readthedocs.io/en/latest/api/disparity.html#pivuq.disparity.ilk): Python implementation of Sciacchitano, A., Wieneke, B., & Scarano, F. (2013). PIV uncertainty quantification by image matching. *Measurement Science and Technology, 24* (4). [https://doi.org/10.1088/0957-0233/24/4/045302](https://doi.org/10.1088/0957-0233/24/4/045302). [[piv.de](http://piv.de/uncertainty/)]
 
 
 ## Installation
