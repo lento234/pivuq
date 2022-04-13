@@ -5,9 +5,5 @@ dependencies:
   - python=3.9
   - pip:
     - ipython
-    - jupyterlab
-    - matplotlib
     - poetry
-    - pre-commit
-    - pytest
-    - -r docs/requirements.txt # documentation
+    - -r docs/requirements.txt # documentation and examples
