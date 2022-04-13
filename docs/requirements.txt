@@ -1,4 +1,5 @@
 ipykernel
+jupyterlab
 matplotlib
 nbsphinx
 pandoc
