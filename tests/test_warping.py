@@ -1,5 +1,5 @@
 import numpy as np
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_allclose, assert_array_equal
 
 import pivuq
 
@@ -38,4 +38,17 @@ def test_warp_skimage():
                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
             ]
         ),
+    )
+
+
+def test_interpolate_to_pixel():
+
+    U = np.ones((2, 3, 3))
+    imshape = (10, 10)
+    kind = "linear"
+
+    assert pivuq.warping.interpolate_to_pixel(U, imshape, kind).shape == (2, *imshape)
+
+    assert_allclose(
+        pivuq.warping.interpolate_to_pixel(U, imshape, kind), np.ones((2, *imshape))
     )
