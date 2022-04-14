@@ -4,7 +4,7 @@
 [![PyPi Version](https://img.shields.io/pypi/v/pivuq.svg?style=flat-square&labelColor=000000)](https://pypi.org/project/pivuq/)
 [![PyPi Python versions](https://img.shields.io/pypi/pyversions/pivuq.svg?style=flat-square&labelColor=000000)](https://pypi.org/project/pivuq/)
 [![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square&labelColor=000000)](#license)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6458153.svg)](https://doi.org/10.5281/zenodo.6458153)
+[![DOI](https://img.shields.io/badge/DOI-10.5281/zenodo.6458153-blue?style=flat-square&labelColor=000000)](https://doi.org/10.5281/zenodo.6458153)
 
 `This project is still under active development.`
 
