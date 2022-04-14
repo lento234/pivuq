@@ -52,3 +52,15 @@ def test_interpolate_to_pixel():
     assert_allclose(
         pivuq.warping.interpolate_to_pixel(U, imshape, kind), np.ones((2, *imshape))
     )
+
+
+def test_warp():
+
+    frame_a = np.pad(np.ones((3, 3)), 2)
+    frame_b = np.roll(frame_a, 1, axis=(0, 1))
+
+    warped_frame_a, warped_frame_b = pivuq.warp(
+        (frame_a, frame_b), np.ones((2, 2, 2)), nsteps=1, order=1
+    )
+
+    assert_allclose(warped_frame_a, warped_frame_b)
