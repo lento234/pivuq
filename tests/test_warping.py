@@ -59,8 +59,62 @@ def test_warp():
     frame_a = np.pad(np.ones((3, 3)), 2)
     frame_b = np.roll(frame_a, 1, axis=(0, 1))
 
+    # Test all orders
     warped_frame_a, warped_frame_b = pivuq.warp(
-        (frame_a, frame_b), np.ones((2, 2, 2)), nsteps=1, order=1
+        (frame_a, frame_b),
+        np.ones((2, 2, 2)),
+        nsteps=1,
+        order=1,
     )
+    assert_allclose(warped_frame_a, warped_frame_b)
 
+    warped_frame_a, warped_frame_b = pivuq.warp(
+        (frame_a, frame_b),
+        np.ones((2, 2, 2)),
+        nsteps=1,
+        order=2,
+    )
+    assert_allclose(warped_frame_a, warped_frame_b)
+
+    warped_frame_a, warped_frame_b = pivuq.warp(
+        (frame_a, frame_b),
+        np.ones((2, 2, 2)),
+        nsteps=1,
+        order=3,
+    )
+    assert_allclose(warped_frame_a, warped_frame_b)
+
+    warped_frame_a, warped_frame_b = pivuq.warp(
+        (frame_a, frame_b),
+        np.ones((2, 2, 2)),
+        nsteps=1,
+        order=4,
+    )
+    assert_allclose(warped_frame_a, warped_frame_b)
+
+    warped_frame_a, warped_frame_b = pivuq.warp(
+        (frame_a, frame_b),
+        np.ones((2, 2, 2)),
+        nsteps=1,
+        order=5,
+    )
+    assert_allclose(warped_frame_a, warped_frame_b)
+
+    # Test forward and backward
+    warped_frame_a, warped_frame_b = pivuq.warp(
+        (frame_a, frame_b),
+        np.ones((2, 2, 2)),
+        direction="forward",
+        nsteps=1,
+        order=1,
+    )
+    assert_allclose(warped_frame_a, warped_frame_b)
+
+    warped_frame_a, warped_frame_b = pivuq.warp(
+        (frame_a, frame_b),
+        np.ones((2, 2, 2)),
+        direction="backward",
+        nsteps=1,
+        order=1,
+    )
     assert_allclose(warped_frame_a, warped_frame_b)
