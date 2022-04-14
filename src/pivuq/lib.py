@@ -5,7 +5,7 @@ import skimage
 
 
 def construct_subpixel_position_map(im):
-    """Generate 3-point Gaussian distribution function map based on neighbourhood intensities.
+    r"""Construct sub-pixel position map based on 3-point Gaussian fit stencil.
 
     Parameters
     ----------
@@ -46,7 +46,7 @@ def construct_subpixel_position_map(im):
 
 @numba.jit(nopython=True, cache=True)
 def find_peak_position(im, ic, jc, radius=1):
-    """Peak position finder around the radius of centroid.
+    r"""Peak position finder around the radius of centroid.
 
     Parameters
     ----------
@@ -97,7 +97,7 @@ def disparity_vector_computation(
     radius : int, default: 2
         Discrete particle position search radius from the centroid defined by :math:`\varphi`.
     sigma : int or None, default: None
-        To perform gaussian smoothing of the image intensity product :math:`Pi`.
+        To perform gaussian smoothing of the image intensity product :math:`\Pi`.
 
     Returns
     -------
@@ -111,27 +111,28 @@ def disparity_vector_computation(
     References
     ----------
     .. [1] Sciacchitano, A., Wieneke, B., & Scarano, F. (2013). PIV uncertainty quantification by image matching.
-        Measurement Science and Technology, 24 (4). https://doi.org/10.1088/0957-0233/24/4/045302
+        Measurement Science and Technology, 24 (4). https://doi.org/10.1088/0957-0233/24/4/045302.
     """
 
     frame_a, frame_b = warped_image_pair
 
-    # # Ensure images are float
+    # Ensure images are float
     frame_a = frame_a.astype("float")
     frame_b = frame_b.astype("float")
 
-    # Image intensity product (Eq. 1): :math:`\Pi = \hat{I}_1\hat{I}_2`
-    imgPI = frame_a * frame_b
-
     # Smoothing to suppress noise
     if sigma:
-        imgPI = scipy.ndimage.gaussian_filter(imgPI, sigma)
+        frame_a = scipy.ndimage.gaussian_filter(frame_a, sigma)
+        frame_b = scipy.ndimage.gaussian_filter(frame_b, sigma)
+
+    # Image intensity product (Eq. 1): :math:`\Pi = \hat{I}_1\hat{I}_2`
+    imgPI = frame_a * frame_b
 
     # Generate binary image for thresholding
     thres = skimage.filters.threshold_otsu(imgPI)
     imgPI_b = imgPI > (thres * threshold_ratio)
 
-    # # Calculate peaks values
+    # Calculate peaks values
     imgPI_C = imgPI[1:-1, 1:-1]
     imgPI_W = imgPI[1:-1, :-2]
     imgPI_E = imgPI[1:-1, 2:]
