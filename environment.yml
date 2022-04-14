@@ -1,4 +1,6 @@
 # Development python environment
+channels:
+  - conda-forge
 name: pivuq
 dependencies:
   - pip
