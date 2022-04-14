@@ -13,7 +13,7 @@ def ilk(
     velocity_upsample_kind="linear",
     warp_direction="center",
     warp_order=1,
-    warp_nsteps=5,
+    warp_nsteps=1,
 ):
     r"""Disparity map calculation using iterative Lucas Kanade ("ilk").
 
