@@ -4,7 +4,19 @@ import scipy.ndimage
 import skimage
 
 
-def find_subpixel_position(im):
+def construct_subpixel_position_map(im):
+    """Generate 3-point Gaussian distribution function map based on neighbourhood intensities.
+
+    Parameters
+    ----------
+    im : np.ndarray
+        Image of size :math:`N \times M`.
+
+    Returns
+    -------
+    X_sub, Y_sub : np.ndarray
+        Subpixel position map of size :math:`N \times M`.
+    """
     eps = np.finfo(np.float64).eps
 
     # Log of image
@@ -23,17 +35,33 @@ def find_subpixel_position(im):
     im_S[:-1, :] = im[1:, :]
 
     # Subpixel position
-    x_sub = (im_W - im_E) / 2 / (im_E + im_W - 2 * im + eps)
-    y_sub = (im_S - im_N) / 2 / (im_S + im_N - 2 * im + eps)
+    Y_sub = (im_W - im_E) / 2 / (im_E + im_W - 2 * im + eps)
+    X_sub = (im_S - im_N) / 2 / (im_S + im_N - 2 * im + eps)
 
-    x_sub[~np.isfinite(x_sub)] = 0
-    y_sub[~np.isfinite(y_sub)] = 0
+    Y_sub[~np.isfinite(Y_sub)] = 0
+    X_sub[~np.isfinite(X_sub)] = 0
 
-    return x_sub, y_sub
+    return X_sub, Y_sub
 
 
 @numba.jit(nopython=True, cache=True)
 def find_peak_position(im, ic, jc, radius=1):
+    """Peak position finder around the radius of centroid.
+
+    Parameters
+    ----------
+    im : np.ndarray
+        Image array of size :math:`N \times M`.
+    ic, jc : int
+        Row and column index of centroid.
+    radius : int
+        Search radius of centroid.
+
+    Returns
+    -------
+    int, int
+        Row index and column index of peak.
+    """
     n, m = im.shape
     r, iPeak, jPeak, imax = 0, 0, 0, 0
 
@@ -84,7 +112,6 @@ def disparity_vector_computation(
     ----------
     .. [1] Sciacchitano, A., Wieneke, B., & Scarano, F. (2013). PIV uncertainty quantification by image matching.
         Measurement Science and Technology, 24 (4). https://doi.org/10.1088/0957-0233/24/4/045302
-
     """
 
     frame_a, frame_b = warped_image_pair
@@ -135,8 +162,8 @@ def disparity_vector_computation(
     # Construct coordinates
     X = np.tile(Xo, (2, 1, 1))
     Y = np.tile(Yo, (2, 1, 1))
-    Y_A_sub, X_A_sub = find_subpixel_position(frame_a)
-    Y_B_sub, X_B_sub = find_subpixel_position(frame_b)
+    X_A_sub, Y_A_sub = construct_subpixel_position_map(frame_a)
+    X_B_sub, Y_B_sub = construct_subpixel_position_map(frame_b)
 
     nan_indices = []
     for k, (i, j) in enumerate(coords.T):
