@@ -4,6 +4,7 @@
 [![PyPi Version](https://img.shields.io/pypi/v/pivuq.svg?style=flat-square&labelColor=000000)](https://pypi.org/project/pivuq/)
 [![PyPi Python versions](https://img.shields.io/pypi/pyversions/pivuq.svg?style=flat-square&labelColor=000000)](https://pypi.org/project/pivuq/)
 [![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square&labelColor=000000)](#license)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6458153.svg)](https://doi.org/10.5281/zenodo.6458153)
 
 `This project is still under active development.`
 
@@ -41,6 +42,8 @@ poetry install
 
 ## How to cite
 
-*Work in progress*. In future, please cite the following paper:
+*Work in progress* version: https://doi.org/10.5281/zenodo.6458153
+
+In future, please cite the following paper:
 
 > Manickathan et al. (2022). PIVUQ: Uncertainty Quantification Toolkit for Quantitative Flow Visualization. *in prep*.
