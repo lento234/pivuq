@@ -78,7 +78,7 @@ def warp(
     U,
     velocity_upsample_kind="linear",
     direction="center",
-    nsteps=5,
+    nsteps=1,
     order=1,
 ) -> np.ndarray:
     r"""Warp image pair pixel-wise to each other using `skimage.transform.warp`.
@@ -86,22 +86,23 @@ def warp(
     Parameters
     ----------
     image_pair : np.ndarray
-        Image pairs :math:`\mathbf{I} = (I_0, I_1)^{\top}` of size (2 x rows x cols).
+        Image pairs :math:`\mathbf{I} = (I_0, I_1)^{\top}` of size :math:`2 \times N \times M`.
     U : np.ndarray
-        Sparse or dense 2D velocity field :math:`\mathbf{U} = (u, v)^{\top}` of size (2 x U_rows x U_cols).
+        Sparse or dense 2D velocity field :math:`\mathbf{U} = (u, v)^{\top}` of size :math:`2 \times U_N \times U_M`.
     warp_direction : {"forward", "center", "backward"}, default: "center"
         Warping warp_direction.
     velocity_upsample_kind : {"linear", "cubic", "quintic"}, default: "linear"
         Velocity upsampling kind for spline interpolation `scipy.interpolation.interp2d`.
-    nsteps : int, default: 5
-        Number of sub-steps to use for warping to improve accuracy.
+    nsteps : int, default: 1
+        Number of sub-steps to use for warping to improve accuracy. Although, the original flow estimator (e.g. PIV)
+        most likely uses :math:`n_{\mathrm{steps}}=1`.
     order : 1-5, default: 1
         The order of interpolation for `skimage.transform.warp`.
 
     Returns
     -------
     np.ndarray
-        Warped image pair :math:`\hat{\mathbf{I}} = (\hat{I}_0, \hat{I}_1)^{\top}` of size (2 x rows x cols).
+        Warped image pair :math:`\hat{\mathbf{I}} = (\hat{I}_0, \hat{I}_1)^{\top}` of size :math:`2 \times N \times M`.
     """
 
     # warping image pairs
