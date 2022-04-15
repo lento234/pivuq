@@ -102,11 +102,12 @@ def disparity_vector_computation(
     Returns
     -------
     D : np.ndarray
-        Disparity map of size :math:`2 \times N \times M` defined by Eq. (2) [1]_.
+        Disparity map :math:`D` of size :math:`2 \times N \times M` defined by Eq. (2) [1]_.
     c : np.ndarray
-        Disparity weight map of size :math:`N \times M` defined by Eq. (3) [1]_.
+        Disparity weight map :math:`c` of size :math:`N \times M` defined by Eq. (3) [1]_.
     peaks : np.ndarray
-        Binary image of size :math:`N \times M` containing the peak positions of the particle positions.
+        Binary peak map :math:`\varphi` of size :math:`N \times M` containing the peak positions of the particle
+        positions.
 
     References
     ----------
@@ -191,18 +192,31 @@ def disparity_vector_computation(
 
 @jit(nopython=True, parallel=True, cache=True)
 def accumulate_windowed_statistics(D, c, weights, wr, N, mu, sigma, delta):
-    """_summary_
+    r"""Numba accelerated loop for computing the disparity statistics inside a window of radius `wr`.
 
     Parameters
     ----------
-    D :(_type_): _description_
-        c (_type_): _description_
-        weights (_type_): _description_
-        wr (_type_): _description_
-        N (_type_): _description_
-        mu (_type_): _description_
-        sigma (_type_): _description_
-        delta (_type_): _description_
+    D : np.ndarray
+        Disparity map :math:`D` of size :math:`2 \times N \times M` defined by Eq. (2) [1]_.
+    c : np.ndarray
+        Disparity weight map :math:`c` of size :math:`N \times M` defined by Eq. (3) [1]_.
+    weights : np.ndarray
+        Windowing weights of size :math:`N \times M` defined by Gaussian or tophat filter.
+    wr : int
+        Window radius.
+    N : np.ndarray
+        Number of particle peaks in the window.
+    mu : np.ndarray
+        Mean of the disparity map :math:`\mu` in the window.
+    sigma : np.ndarray
+        Standard deviation of the disparity map :math:`\sigma`.
+    delta : np.ndarray
+         Instantaneous error estimation :math:`\hat{\delta}` defined by Eq. (4) [1]_.
+
+    References
+    ----------
+    .. [1] Sciacchitano, A., Wieneke, B., & Scarano, F. (2013). PIV uncertainty quantification by image matching.
+        Measurement Science and Technology, 24 (4). https://doi.org/10.1088/0957-0233/24/4/045302.
     """
     n, m = D.shape[1:]
 
@@ -255,9 +269,9 @@ def disparity_statistics(D, c, window_size=16, window="gaussian"):
     Parameters
     ----------
     D : np.ndarray
-        Disparity map of size :math:`2 \times N \times M` defined by Eq. (2) [1]_.
+        Disparity map :math:`D` of size :math:`2 \times N \times M` defined by Eq. (2) [1]_.
     c : np.ndarray
-        Disparity weight map of size :math:`N \times M` defined by Eq. (3) [1]_.
+        Disparity weight map :math:`c` of size :math:`N \times M` defined by Eq. (3) [1]_.
     window_size : int, default: 16
         Size of the window.
     window : {"gaussian", "tophat"}, default: "gaussian"
@@ -301,7 +315,7 @@ def disparity_statistics(D, c, window_size=16, window="gaussian"):
     sigma = np.zeros((2, n, m))
     delta = np.zeros((2, n, m))
 
-    # Accumulate disparity statistics within the window
+    # Accumulate disparity statistics within the window (numba accelerated loop)
     accumulate_windowed_statistics(D, c, weights, wr, N, mu, sigma, delta)
 
     return N, mu, sigma, delta
