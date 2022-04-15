@@ -1,7 +1,7 @@
-import numba
 import numpy as np
 import scipy.ndimage
-import skimage
+import skimage.filters
+from numba import jit, prange
 
 
 def construct_subpixel_position_map(im):
@@ -44,7 +44,7 @@ def construct_subpixel_position_map(im):
     return X_sub, Y_sub
 
 
-@numba.jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)
 def find_peak_position(im, ic, jc, radius=1):
     r"""Peak position finder around the radius of centroid.
 
@@ -189,7 +189,7 @@ def disparity_vector_computation(
     return D, c, peaks
 
 
-@numba.jit(nopython=True, parallel=True, cache=True)
+@jit(nopython=True, parallel=True, cache=True)
 def accumulate_windowed_statistics(D, c, weights, wr, N, mu, sigma, delta):
     """_summary_
 
@@ -206,8 +206,8 @@ def accumulate_windowed_statistics(D, c, weights, wr, N, mu, sigma, delta):
     """
     n, m = D.shape[1:]
 
-    for i in numba.prange(n):
-        for j in numba.prange(m):
+    for i in prange(n):
+        for j in prange(m):
             i0, i1 = max(0, i - wr), min(i + wr, n - 1)
             j0, j1 = max(0, j - wr), min(j + wr, m - 1)
 

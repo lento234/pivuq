@@ -1,5 +1,5 @@
 import numpy as np
-import skimage
+import skimage.registration
 
 from .warping import warp
 

@@ -1,6 +1,6 @@
 import numpy as np
-import scipy.interpolate as spinterp
-import skimage
+import scipy.interpolate
+import skimage.transform
 
 
 def warp_skimage(frame, U, coords, order=1, mode="edge") -> np.ndarray:
@@ -67,8 +67,8 @@ def interpolate_to_pixel(U, imshape, kind="linear") -> np.ndarray:
     xi, yi = np.arange(imshape[0]), np.arange(imshape[1])
 
     # Interpolate to pixel level
-    u_px = spinterp.interp2d(y, x, u, kind=kind)(yi, xi)
-    v_px = spinterp.interp2d(y, x, v, kind=kind)(yi, xi)
+    u_px = scipy.interpolate.interp2d(y, x, u, kind=kind)(yi, xi)
+    v_px = scipy.interpolate.interp2d(y, x, v, kind=kind)(yi, xi)
 
     return np.stack((u_px, v_px))
 
