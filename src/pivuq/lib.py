@@ -187,3 +187,121 @@ def disparity_vector_computation(
     D = np.stack((X[1] - X[0], Y[1] - Y[0]))
 
     return D, c, peaks
+
+
+@numba.jit(nopython=True, parallel=True, cache=True)
+def accumulate_windowed_statistics(D, c, weights, wr, N, mu, sigma, delta):
+    """_summary_
+
+    Parameters
+    ----------
+    D :(_type_): _description_
+        c (_type_): _description_
+        weights (_type_): _description_
+        wr (_type_): _description_
+        N (_type_): _description_
+        mu (_type_): _description_
+        sigma (_type_): _description_
+        delta (_type_): _description_
+    """
+    n, m = D.shape[1:]
+
+    for i in numba.prange(n):
+        for j in numba.prange(m):
+            i0, i1 = max(0, i - wr), min(i + wr, n - 1)
+            j0, j1 = max(0, j - wr), min(j + wr, m - 1)
+
+            # Filter windowed
+            weights_w = weights[
+                wr - (i - i0) : wr + (i1 - i), wr - (j - j0) : wr + (j1 - j)
+            ]
+
+            # Peaks windowed
+            c_w = c[i0:i1, j0:j1] * weights_w
+            peaks_w = c_w > 0
+
+            # Number of peaks inside window
+            N[i, j] = np.sum(peaks_w)
+
+            if N[i, j] > 0:
+                # Disparity windowed
+                dx_w = D[:, i0:i1, j0:j1]
+                dy_w = D[1, i0:i1, j0:j1]
+
+                # Mean disparity (bias): Eq. (3) (left)
+                mu[0, i, j] = np.sum(c_w * dx_w) / np.sum(c_w)
+                mu[1, i, j] = np.sum(c_w * dy_w) / np.sum(c_w)
+
+                # Std. dev. disparity (rms): Eq. (3) (right)
+                sigma[0, i, j] = np.sqrt(
+                    np.sum(c_w * (dx_w - mu[0, i, j]) ** 2) / np.sum(c_w)
+                )
+                sigma[1, i, j] = np.sqrt(
+                    np.sum(c_w * (dy_w - mu[1, i, j]) ** 2) / np.sum(c_w)
+                )
+
+                # Instantanous error estimation
+                delta[0, i, j] = np.sqrt(
+                    mu[0, i, j] ** 2 + (sigma[0, i, j] / np.sqrt(N[i, j])) ** 2
+                )
+                delta[1, i, j] = np.sqrt(
+                    mu[1, i, j] ** 2 + (sigma[1, i, j] / np.sqrt(N[i, j])) ** 2
+                )
+
+
+def disparity_statistics(D, c, window_size=16, window="gaussian"):
+    r"""Calculate disparity statistics inside a window.
+
+    Parameters
+    ----------
+    D : np.ndarray
+        Disparity map of size :math:`2 \times N \times M` defined by Eq. (2) [1]_.
+    c : np.ndarray
+        Disparity weight map of size :math:`N \times M` defined by Eq. (3) [1]_.
+    window_size : int, default: 16
+        Size of the window.
+    window : {"gaussian", "tophat"}, default: "gaussian"
+        Window type for the disparity statistics.
+
+    Returns
+    -------
+    N : np.ndarray
+        Number of peaks inside the window.
+    mu : np.ndarray
+        Mean disparity map of size :math:`2 \times N \times M` defined by Eq. (3) [1]_.
+    sigma : np.ndarray
+        Standard deviation disparity map of size :math:`2 \times N \times M` defined by Eq. (3) [1]_.
+    delta : np.ndarray
+        Instantaneous error map of size :math:`2 \times N \times M` defined by Eq. (3) [1]_.
+
+    References
+    ----------
+    .. [1] Sciacchitano, A., Wieneke, B., & Scarano, F. (2013). PIV uncertainty quantification by image matching.
+        Measurement Science and Technology, 24 (4). https://doi.org/10.1088/0957-0233/24/4/045302.
+    """
+
+    # Generate windowed
+    n, m = D.shape[1:]
+
+    # Gaussian windowing
+    if window == "gaussian":
+        coeff = 1.75
+        wr = int(np.round(window_size / 2 * coeff))
+        weights = scipy.signal.windows.gaussian(wr * 2, wr / 2)
+    elif window == "tophat":
+        coeff = 1
+        wr = int(np.round(window_size / 2 * coeff))
+        weights = np.ones(wr * 2)
+    else:
+        raise ValueError(f"Window type `{window}` not valid.")
+
+    # Uncertainty statistics
+    N = np.zeros((n, m))
+    mu = np.zeros((2, n, m))
+    sigma = np.zeros((2, n, m))
+    delta = np.zeros((2, n, m))
+
+    # Accumulate disparity statistics within the window
+    accumulate_windowed_statistics(D, c, weights, wr, N, mu, sigma, delta)
+
+    return N, mu, sigma, delta
