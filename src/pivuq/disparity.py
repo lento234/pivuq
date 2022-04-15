@@ -1,7 +1,7 @@
 import numpy as np
 import skimage.registration
 
-from .warping import warp
+from . import lib, warping
 
 
 def ilk(
@@ -53,7 +53,7 @@ def ilk(
     """
 
     # Warp image: $\hat{\mathbf{I}}$
-    warped_frame_a, warped_frame_b = warp(
+    warped_frame_a, warped_frame_b = warping.warp(
         image_pair,
         U,
         velocity_upsample_kind=velocity_upsample_kind,
@@ -84,7 +84,20 @@ def ilk(
     return X, Y, D
 
 
-def sws():
+def sws(
+    image_pair,
+    U,
+    window_size=16,
+    window="gaussian",
+    threshold_ratio=1,
+    radius=1,
+    sigma=None,
+    sliding_window_subtraction=False,
+    velocity_upsample_kind="linear",
+    warp_direction="center",
+    warp_order=1,
+    warp_nsteps=1,
+):
     """Python implementation of `Sciacchitano-Wieneke-Scarano` algorithm of PIV Uncertainty Quantification by image
     matching [1]_.
 
@@ -97,4 +110,36 @@ def sws():
     .. [1] Sciacchitano, A., Wieneke, B., & Scarano, F. (2013). PIV uncertainty quantification by image matching.
         Measurement Science and Technology, 24 (4). https://doi.org/10.1088/0957-0233/24/4/045302
     """
-    raise NotImplementedError("Not implemented yet.")
+
+    # Warp image: $\hat{\mathbf{I}}$
+    warped_image_pair = warping.warp(
+        image_pair,
+        U,
+        velocity_upsample_kind=velocity_upsample_kind,
+        direction=warp_direction,
+        nsteps=warp_nsteps,
+        order=warp_order,
+    )
+
+    # Warped image coordinates
+    nr, nc = warped_image_pair.shape[1:]
+    X, Y = np.meshgrid(np.arange(nr), np.arange(nc))
+
+    # Disparity vector computation
+    if sliding_window_subtraction:
+        sliding_window_size = window_size
+    else:
+        sliding_window_size = None
+    D, c, peaks = lib.disparity_vector_computation(
+        warped_image_pair,
+        threshold_ratio=threshold_ratio,
+        radius=radius,
+        sigma=sigma,
+        sliding_window_size=sliding_window_size,
+    )
+
+    N, mu, sigma, delta = lib.disparity_statistics(
+        D, c, window_size=window_size, window=window
+    )
+
+    return X, Y, delta, N, mu, sigma

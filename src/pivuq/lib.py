@@ -83,7 +83,11 @@ def find_peak_position(im, ic, jc, radius=1):
 
 
 def disparity_vector_computation(
-    warped_image_pair, threshold_ratio=0.5, radius=2, sigma=None
+    warped_image_pair,
+    threshold_ratio=0.5,
+    radius=2,
+    sigma=None,
+    sliding_window_size=False,
 ):
     r"""Python implementation of `Sciacchitano-Wieneke-Scarano` disparity vector computation algorithm for PIV
     Uncertainty Quantification by image matching [1]_.
@@ -120,6 +124,12 @@ def disparity_vector_computation(
     # Ensure images are float
     frame_a = frame_a.astype("float")
     frame_b = frame_b.astype("float")
+
+    if sliding_window_size:
+        frame_a -= scipy.ndimage.gaussian_filter(frame_a, sliding_window_size)
+        frame_b -= scipy.ndimage.gaussian_filter(frame_b, sliding_window_size)
+        frame_a -= frame_a.min()
+        frame_b -= frame_b.min()
 
     # Smoothing to suppress noise
     if sigma:
@@ -239,28 +249,36 @@ def accumulate_windowed_statistics(D, c, weights, wr, N, mu, sigma, delta):
 
             if N[i, j] > 0:
                 # Disparity windowed
-                dx_w = D[:, i0:i1, j0:j1]
-                dy_w = D[1, i0:i1, j0:j1]
+                # dx_w = D[0, i0:i1, j0:j1]
+                # dy_w = D[1, i0:i1, j0:j1]
 
-                # Mean disparity (bias): Eq. (3) (left)
-                mu[0, i, j] = np.sum(c_w * dx_w) / np.sum(c_w)
-                mu[1, i, j] = np.sum(c_w * dy_w) / np.sum(c_w)
+                # # Mean disparity (bias): Eq. (3) (left)
+                # mu[0, i, j] = np.sum(c_w * dx_w) / np.sum(c_w)
+                # mu[1, i, j] = np.sum(c_w * dy_w) / np.sum(c_w)
 
-                # Std. dev. disparity (rms): Eq. (3) (right)
-                sigma[0, i, j] = np.sqrt(
-                    np.sum(c_w * (dx_w - mu[0, i, j]) ** 2) / np.sum(c_w)
-                )
-                sigma[1, i, j] = np.sqrt(
-                    np.sum(c_w * (dy_w - mu[1, i, j]) ** 2) / np.sum(c_w)
-                )
+                # # Std. dev. disparity (rms): Eq. (3) (right)
+                # sigma[0, i, j] = np.sqrt(np.sum(c_w * (dx_w - mu[0, i, j]) ** 2) / np.sum(c_w))
+                # sigma[1, i, j] = np.sqrt(np.sum(c_w * (dy_w - mu[1, i, j]) ** 2) / np.sum(c_w))
 
-                # Instantanous error estimation
-                delta[0, i, j] = np.sqrt(
-                    mu[0, i, j] ** 2 + (sigma[0, i, j] / np.sqrt(N[i, j])) ** 2
-                )
-                delta[1, i, j] = np.sqrt(
-                    mu[1, i, j] ** 2 + (sigma[1, i, j] / np.sqrt(N[i, j])) ** 2
-                )
+                # # Instantanous error estimation
+                # delta[0, i, j] = np.sqrt(mu[0, i, j] ** 2 + (sigma[0, i, j] / np.sqrt(N[i, j])) ** 2)
+                # delta[1, i, j] = np.sqrt(mu[1, i, j] ** 2 + (sigma[1, i, j] / np.sqrt(N[i, j])) ** 2)
+                for k in range(2):
+                    # Disparity windowed
+                    d_w = D[k, i0:i1, j0:j1]
+
+                    # Mean disparity (bias): Eq. (3) (left)
+                    mu[k, i, j] = np.sum(c_w * d_w) / np.sum(c_w)
+
+                    # Std. dev. disparity (rms): Eq. (3) (right)
+                    sigma[k, i, j] = np.sqrt(
+                        np.sum(c_w * (d_w - mu[k, i, j]) ** 2) / np.sum(c_w)
+                    )
+
+                    # Instantanous error estimation
+                    delta[k, i, j] = np.sqrt(
+                        mu[k, i, j] ** 2 + (sigma[k, i, j] / np.sqrt(N[i, j])) ** 2
+                    )
 
 
 def disparity_statistics(D, c, window_size=16, window="gaussian"):
@@ -308,6 +326,8 @@ def disparity_statistics(D, c, window_size=16, window="gaussian"):
         weights = np.ones(wr * 2)
     else:
         raise ValueError(f"Window type `{window}` not valid.")
+
+    weights = np.outer(weights, weights)  # 2D windowing weights
 
     # Uncertainty statistics
     N = np.zeros((n, m))
