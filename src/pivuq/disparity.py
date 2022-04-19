@@ -122,7 +122,7 @@ def sws(
 
     # Warped image coordinates
     nr, nc = warped_image_pair.shape[1:]
-    X, Y = np.meshgrid(np.arange(nr), np.arange(nc))
+    Y, X = np.meshgrid(np.arange(nr), np.arange(nc), indexing="ij")
 
     # Disparity vector computation
     if sliding_window_subtraction:
