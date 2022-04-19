@@ -89,10 +89,9 @@ def sws(
     U,
     window_size=16,
     window="gaussian",
-    threshold_ratio=1,
     radius=1,
-    sigma=None,
     sliding_window_subtraction=False,
+    ROI=None,
     velocity_upsample_kind="linear",
     warp_direction="center",
     warp_order=1,
@@ -130,16 +129,18 @@ def sws(
         sliding_window_size = window_size
     else:
         sliding_window_size = None
-    D, c, peaks = lib.disparity_vector_computation(
+
+    D, c = lib.disparity_vector_computation(
         warped_image_pair,
-        threshold_ratio=threshold_ratio,
         radius=radius,
-        sigma=sigma,
         sliding_window_size=sliding_window_size,
     )
-
     N, mu, sigma, delta = lib.disparity_statistics(
-        D, c, window_size=window_size, window=window
+        D,
+        c,
+        window_size=window_size,
+        window=window,
+        ROI=ROI,
     )
 
     return X, Y, delta, N, mu, sigma
