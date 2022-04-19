@@ -35,8 +35,6 @@ def construct_subpixel_position_map(im):
     im_S[:-1, :] = im[1:, :]
 
     # Subpixel position
-    # Y_sub = (im_W - im_E) / 2.0 / (im_E + im_W - 2 * im)
-    # X_sub = (im_S - im_N) / 2.0 / (im_S + im_N - 2 * im)
     X_sub = (im_W - im_E) / 2.0 / (im_E + im_W - 2 * im)
     Y_sub = (im_S - im_N) / 2.0 / (im_S + im_N - 2 * im)
 
@@ -68,8 +66,8 @@ def find_particle(im, ic, jc, radius=1):
     r, iPeak, jPeak, imax = 0, 0, 0, 0
 
     while r <= radius and imax == 0:
-        for j in range(max(1, jc - r), min(jc + r, m - 2)):
-            for i in range(max(1, ic - r), min(ic + r, n - 2)):
+        for i in range(max(1, ic - r), min(ic + r, n - 2)):
+            for j in range(max(1, jc - r), min(jc + r, m - 2)):
                 if (
                     (im[i, j] > im[i, j - 1])
                     & (im[i, j] > im[i - 1, j])
@@ -89,8 +87,10 @@ def find_peaks(imgPI):
 
     # Calculate peaks values
     imgPI_C = imgPI[1:-1, 1:-1]
-    imgPI_W = imgPI[1:-1, :-2]
+
+    # Neighbors
     imgPI_E = imgPI[1:-1, 2:]
+    imgPI_W = imgPI[1:-1, :-2]
     imgPI_N = imgPI[:-2, 1:-1]
     imgPI_S = imgPI[2:, 1:-1]
 
@@ -99,8 +99,8 @@ def find_peaks(imgPI):
     peaks[1:-1, 1:-1] = (
         (imgPI_C > imgPI_E)
         & (imgPI_C > imgPI_W)
-        & (imgPI_C > imgPI_S)
         & (imgPI_C > imgPI_N)
+        & (imgPI_C > imgPI_S)
     )
 
     # Threshold background
@@ -138,38 +138,42 @@ def accumulate_windowed_statistics(D, c, weights, wr, N, mu, sigma, delta, coeff
         Measurement Science and Technology, 24 (4). https://doi.org/10.1088/0957-0233/24/4/045302.
     """
     n, m = D.shape[1:]
+    wr_eff = int(np.round(coeff * wr))
 
     for i in prange(n):
-        i0, i1 = max(0, i - int(np.round(coeff * wr))), min(
-            i + int(np.round(coeff * wr)), n - 1
-        )
+
+        # Row bounds of windw
+        i0 = max(i - wr_eff, 0)
+        i1 = min(i + wr_eff, n - 1)
+
         for j in prange(m):
+
+            # Only calculate inside ROI
             if (i >= ROI[0]) and (i <= ROI[1]) and (j >= ROI[2]) and (j <= ROI[3]):
 
-                j0, j1 = max(0, j - int(np.round(coeff * wr))), min(
-                    j + int(np.round(coeff * wr)), m - 1
-                )
+                # Column bounds of windw
+                j0 = max(j - wr_eff, 0)
+                j1 = min(j + wr_eff, m - 1)
 
                 # Filter windowed
                 weights_w = weights[
-                    int(np.round(coeff * wr))
-                    - (i - i0) : int(np.round(coeff * wr))
-                    + (i1 - i),
-                    int(np.round(coeff * wr))
-                    - (j - j0) : int(np.round(coeff * wr))
-                    + (j1 - j),
+                    wr_eff - (i - i0) : wr_eff + (i1 - i),
+                    wr_eff - (j - j0) : wr_eff + (j1 - j),
                 ]
 
                 # Peaks windowed
                 c_w = c[i0:i1, j0:j1] * weights_w
 
-                # Number of peaks inside window
-                N[i, j] = np.maximum(np.sum(c_w > 0), 1)
+                # Number of peaks inside window # Bug in original code?
+                N[i, j] = np.maximum(np.sum((c_w > 0) * weights_w), 1)
 
                 for k in range(2):
                     # Disparity windowed
                     d_w = D[k, i0:i1, j0:j1].ravel()
                     c_w = (c[i0:i1, j0:j1] * weights_w).ravel()
+
+                    d_w = d_w[np.nonzero(d_w)]
+                    c_w = c_w[np.nonzero(c_w)]
 
                     # Outlier removal
                     valid_mask = np.where(np.abs(d_w - np.mean(d_w)) <= 3 * np.std(d_w))
