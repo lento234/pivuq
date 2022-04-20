@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.signal
 import skimage.registration
 
 from . import lib, warping
@@ -51,6 +52,8 @@ def ilk(
     skimage.registration.optical_flow_ilk : Coarse to fine optical flow estimator.
     skimage.transform.warp : Warp an image according to a given coordinate transformation.
     """
+    # Image dimensions
+    nr, nc = image_pair.shape[1:]
 
     # Warp image: $\hat{\mathbf{I}}$
     warped_frame_a, warped_frame_b = warping.warp(
@@ -61,10 +64,6 @@ def ilk(
         nsteps=warp_nsteps,
         order=warp_order,
     )
-
-    # Warped image coordinates
-    nr, nc = warped_frame_a.shape
-    Y, X = np.meshgrid(np.arange(nr), np.arange(nc), indexing="ij")
 
     # windowing type
     gaussian = True if window == "gaussian" else False
@@ -80,6 +79,9 @@ def ilk(
 
     # Disparity map
     D = np.abs(optical_flow[::-1])
+
+    # Image coordinates
+    Y, X = np.meshgrid(np.arange(nr), np.arange(nc), indexing="ij")
 
     return X, Y, D
 
@@ -110,7 +112,10 @@ def sws(
         Measurement Science and Technology, 24 (4). https://doi.org/10.1088/0957-0233/24/4/045302
     """
 
-    # Warp image: $\hat{\mathbf{I}}$
+    # Image dimensions
+    nr, nc = image_pair.shape[1:]
+
+    # Step 1: Warp image: $\hat{\mathbf{I}}$
     warped_image_pair = warping.warp(
         image_pair,
         U,
@@ -120,11 +125,7 @@ def sws(
         order=warp_order,
     )
 
-    # Warped image coordinates
-    nr, nc = warped_image_pair.shape[1:]
-    Y, X = np.meshgrid(np.arange(nr), np.arange(nc), indexing="ij")
-
-    # Disparity vector computation
+    # Step 2: Disparity vector computation
     if sliding_window_subtraction:
         sliding_window_size = window_size
     else:
@@ -135,12 +136,41 @@ def sws(
         radius=radius,
         sliding_window_size=sliding_window_size,
     )
-    N, mu, sigma, delta = lib.disparity_statistics(
-        D,
-        c,
-        window_size=window_size,
-        window=window,
-        ROI=ROI,
+
+    # Step 3: Disparity statistics calculation
+
+    # Gaussian windowing
+    wr = int(np.round(window_size / 2))
+    if window == "gaussian":
+        coeff = 1.75
+        weights = scipy.signal.windows.gaussian(
+            int(np.round(wr * 2 * coeff)) + 1, int(np.round(wr / 2 * coeff))
+        )
+    elif window == "tophat":
+        coeff = 1
+        weights = np.ones(wr * 2 * coeff + 1)
+    else:
+        raise ValueError(f"Window type `{window}` not valid.")
+
+    weights = np.outer(weights, weights)  # 2D windowing weights
+
+    # Uncertainty statistics
+    N = np.zeros((nr, nc))
+    mu = np.zeros((2, nr, nc))
+    sigma = np.zeros((2, nr, nc))
+    delta = np.zeros((2, nr, nc))
+
+    if ROI is None:
+        ROI = (0, nr, 0, nc)
+    else:
+        ROI = tuple(ROI)
+
+    # Accumulate disparity statistics within the window (numba accelerated loop)
+    lib.accumulate_windowed_statistics(
+        D, c, weights, wr, N, mu, sigma, delta, coeff, ROI
     )
+
+    # Coordinates
+    Y, X = np.meshgrid(np.arange(nr), np.arange(nc), indexing="ij")
 
     return X, Y, delta, N, mu, sigma

@@ -2,7 +2,10 @@ import numpy as np
 import scipy.ndimage
 from numba import jit, prange
 
-from . import utils
+
+def sliding_avg_subtract(im, window_size):
+    im_avg = scipy.ndimage.gaussian_filter(im, sigma=window_size // 2 + 1)
+    return im - im_avg
 
 
 def construct_subpixel_position_map(im):
@@ -236,8 +239,8 @@ def disparity_vector_computation(
     frame_b = frame_b.astype("float")
 
     if sliding_window_size:
-        frame_a = utils.sliding_avg_subtract(frame_a, sliding_window_size)
-        frame_b = utils.sliding_avg_subtract(frame_b, sliding_window_size)
+        frame_a = sliding_avg_subtract(frame_a, sliding_window_size)
+        frame_b = sliding_avg_subtract(frame_b, sliding_window_size)
 
     # Image intensity product (Eq. 1): :math:`\Pi = \hat{I}_1\hat{I}_2`
     imgPI = frame_a * frame_b
@@ -287,67 +290,67 @@ def disparity_vector_computation(
     return D, c
 
 
-def disparity_statistics(D, c, window_size=16, window="gaussian", ROI=None):
-    r"""Calculate disparity statistics inside a window.
+# def disparity_statistics(D, c, window_size=16, window="gaussian", ROI=None):
+#     r"""Calculate disparity statistics inside a window.
 
-    Parameters
-    ----------
-    D : np.ndarray
-        Disparity map :math:`D` of size :math:`2 \times N \times M` defined by Eq. (2) [1]_.
-    c : np.ndarray
-        Disparity weight map :math:`c` of size :math:`N \times M` defined by Eq. (3) [1]_.
-    window_size : int, default: 16
-        Size of the window.
-    window : {"gaussian", "tophat"}, default: "gaussian"
-        Window type for the disparity statistics.
+#     Parameters
+#     ----------
+#     D : np.ndarray
+#         Disparity map :math:`D` of size :math:`2 \times N \times M` defined by Eq. (2) [1]_.
+#     c : np.ndarray
+#         Disparity weight map :math:`c` of size :math:`N \times M` defined by Eq. (3) [1]_.
+#     window_size : int, default: 16
+#         Size of the window.
+#     window : {"gaussian", "tophat"}, default: "gaussian"
+#         Window type for the disparity statistics.
 
-    Returns
-    -------
-    N : np.ndarray
-        Number of peaks inside the window.
-    mu : np.ndarray
-        Mean disparity map of size :math:`2 \times N \times M` defined by Eq. (3) [1]_.
-    sigma : np.ndarray
-        Standard deviation disparity map of size :math:`2 \times N \times M` defined by Eq. (3) [1]_.
-    delta : np.ndarray
-        Instantaneous error map of size :math:`2 \times N \times M` defined by Eq. (3) [1]_.
+#     Returns
+#     -------
+#     N : np.ndarray
+#         Number of peaks inside the window.
+#     mu : np.ndarray
+#         Mean disparity map of size :math:`2 \times N \times M` defined by Eq. (3) [1]_.
+#     sigma : np.ndarray
+#         Standard deviation disparity map of size :math:`2 \times N \times M` defined by Eq. (3) [1]_.
+#     delta : np.ndarray
+#         Instantaneous error map of size :math:`2 \times N \times M` defined by Eq. (3) [1]_.
 
-    References
-    ----------
-    .. [1] Sciacchitano, A., Wieneke, B., & Scarano, F. (2013). PIV uncertainty quantification by image matching.
-        Measurement Science and Technology, 24 (4). https://doi.org/10.1088/0957-0233/24/4/045302.
-    """
+#     References
+#     ----------
+#     .. [1] Sciacchitano, A., Wieneke, B., & Scarano, F. (2013). PIV uncertainty quantification by image matching.
+#         Measurement Science and Technology, 24 (4). https://doi.org/10.1088/0957-0233/24/4/045302.
+#     """
 
-    # Generate windowed
-    n, m = D.shape[1:]
+#     # Generate windowed
+#     n, m = D.shape[1:]
 
-    # Gaussian windowing
-    wr = int(np.round(window_size / 2))
-    if window == "gaussian":
-        coeff = 1.75
-        weights = scipy.signal.windows.gaussian(
-            int(np.round(wr * 2 * coeff)) + 1, int(np.round(wr / 2 * coeff))
-        )
-    elif window == "tophat":
-        coeff = 1
-        weights = np.ones(wr * 2 * coeff + 1)
-    else:
-        raise ValueError(f"Window type `{window}` not valid.")
+#     # Gaussian windowing
+#     wr = int(np.round(window_size / 2))
+#     if window == "gaussian":
+#         coeff = 1.75
+#         weights = scipy.signal.windows.gaussian(
+#             int(np.round(wr * 2 * coeff)) + 1, int(np.round(wr / 2 * coeff))
+#         )
+#     elif window == "tophat":
+#         coeff = 1
+#         weights = np.ones(wr * 2 * coeff + 1)
+#     else:
+#         raise ValueError(f"Window type `{window}` not valid.")
 
-    weights = np.outer(weights, weights)  # 2D windowing weights
+#     weights = np.outer(weights, weights)  # 2D windowing weights
 
-    # Uncertainty statistics
-    N = np.zeros((n, m))
-    mu = np.zeros((2, n, m))
-    sigma = np.zeros((2, n, m))
-    delta = np.zeros((2, n, m))
+#     # Uncertainty statistics
+#     N = np.zeros((n, m))
+#     mu = np.zeros((2, n, m))
+#     sigma = np.zeros((2, n, m))
+#     delta = np.zeros((2, n, m))
 
-    if ROI is None:
-        ROI = (0, n, 0, m)
-    else:
-        ROI = tuple(ROI)
+#     if ROI is None:
+#         ROI = (0, n, 0, m)
+#     else:
+#         ROI = tuple(ROI)
 
-    # Accumulate disparity statistics within the window (numba accelerated loop)
-    accumulate_windowed_statistics(D, c, weights, wr, N, mu, sigma, delta, coeff, ROI)
+#     # Accumulate disparity statistics within the window (numba accelerated loop)
+#     accumulate_windowed_statistics(D, c, weights, wr, N, mu, sigma, delta, coeff, ROI)
 
-    return N, mu, sigma, delta
+#     return N, mu, sigma, delta
