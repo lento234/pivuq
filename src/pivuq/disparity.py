@@ -92,19 +92,53 @@ def sws(
     window_size=16,
     window="gaussian",
     radius=1,
-    sliding_window_subtraction=False,
+    sliding_window_subtraction=True,
     ROI=None,
     velocity_upsample_kind="linear",
     warp_direction="center",
     warp_order=1,
     warp_nsteps=1,
 ):
-    """Python implementation of `Sciacchitano-Wieneke-Scarano` algorithm of PIV Uncertainty Quantification by image
+    r"""Python implementation of `Sciacchitano-Wieneke-Scarano` algorithm of PIV Uncertainty Quantification by image
     matching [1]_.
 
-    Raises
-    ------
-    NotImplementedError
+    Parameters
+    ----------
+    image_pair : np.ndarray
+        Image pairs :math:`\mathbf{I} = (I_0, I_1)^{\top}` of size (2 x rows x cols).
+    U : np.ndarray
+        Sparse or dense 2D velocity field :math:`\mathbf{U} = (u, v)^{\top}` of (2 x U_rows x U_cols).
+    window_size : int, default: 16
+        Window size around the pixel to consider the disparity ensemble.
+    window : {"gaussian", "tophat"}, default: "gaussian"
+        Window type for the disparity statistics.
+    radius : int, default: 1
+        Search radius for particle peak position.
+    sliding_window_subtraction : bool, default: False
+        Whether to use the sliding window subtraction before disparity vector calculation.
+    ROI : tuple, default: None
+        Region of interest to use for calculating the disparity ensemble (`i_min`, `i_max`, `j_min`, `j_max`).
+    velocity_upsample_kind : {"linear", "cubic", "quintic"}, default: "linear"
+        Velocity upsampling kind for spline interpolation `scipy.interpolation.interp2d`.
+    warp_direction : {"forward", "center", "backward"}, default: "center"
+        Warping direction.
+    warp_order : 1-5, default: 1
+        The order of interpolation for `skimage.transform.warp`.
+    warp_nsteps : int, default: 5
+        Number of sub-steps to use for warping to improve accuracy.
+
+    Returns
+    -------
+    X, Y : np.ndarray
+        `x` and `y` coordinates of disparity map.
+    delta : np.ndarray
+        Instantaneous error estimation map of size :math:`2 \times N \times M` defined by Eq. (3) [1]_.
+    N : np.ndarray
+        Number of peaks inside the window.
+    mu : np.ndarray
+        Mean disparity map of size :math:`2 \times N \times M` defined by Eq. (3) [1]_.
+    sigma : np.ndarray
+        Standard deviation disparity map of size :math:`2 \times N \times M` defined by Eq. (3) [1]_.
 
     References
     ----------
@@ -164,7 +198,7 @@ def sws(
         ROI = tuple(ROI)
 
     # Accumulate disparity statistics within the window (numba accelerated loop)
-    lib.accumulate_windowed_statistics(D, c, weights, wr, N, mu, sigma, delta, coeff, ROI)
+    lib.disparity_ensemble_statistics(D, c, weights, wr, N, mu, sigma, delta, coeff, ROI)
 
     # Coordinates
     Y, X = np.meshgrid(np.arange(nr), np.arange(nc), indexing="ij")
