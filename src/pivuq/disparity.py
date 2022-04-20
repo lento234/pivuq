@@ -147,7 +147,7 @@ def sws(
     """
 
     # Image dimensions
-    nr, nc = image_pair.shape[1:]
+    nr, nc = image_pair[0].shape
 
     # Step 1: Warp image: $\hat{\mathbf{I}}$
     warped_image_pair = warping.warp(
