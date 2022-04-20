@@ -18,17 +18,22 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.9"
-matplotlib = "^3.5.1"
-numba = {version = "^0.55.1", python = "<3.10" }
-numpy = "<1.22.0"
+python = "~3.9"
+matplotlib = "~3.5.1"
+numba = {version = "^0.55.1", python = "~3.9" }
+numpy = "~1.21.0"
 scikit-image = "^0.19.2"
-scipy = {version = "^1.8.0", python = "<3.10" }
+scipy = {version = "^1.8.0", python = "~3.9" }
 
 [tool.poetry.dev-dependencies]
 pre-commit = "^2.18.1"
 pytest = "^7.1.1"
 
+[tool.black]
+line-length = 120
+
+[tool.isort]
+profile = "black"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
