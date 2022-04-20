@@ -3,7 +3,21 @@ import scipy.ndimage
 from numba import jit, prange
 
 
-def sliding_avg_subtract(im, window_size):
+def sliding_avg_subtract(im, window_size) -> np.ndarray:
+    r"""Perform sliding window average subtraction.
+
+    Parameters
+    ----------
+    im : np.ndarray
+        Image of size :math:`N \times M`.
+    window_size : int
+        Window size.
+
+    Returns
+    -------
+    np.ndarray
+        Average subtracted image of size :math:`N \times M`.
+    """
     im_avg = scipy.ndimage.gaussian_filter(im, sigma=window_size // 2 + 1)
     return im - im_avg
 
@@ -85,8 +99,24 @@ def find_particle(im, ic, jc, radius=1):
     return iPeak, jPeak
 
 
-def find_peaks(imgPI):
-    # Generate binary image for thresholding
+def find_peaks(imgPI) -> np.ndarray:
+    r"""Particle peak position detection according to Eq. (1) [1]_.
+
+    Parameters
+    ----------
+    imgPI : np.ndarray
+        Image intensity product :math:`\Pi` of size :math:`N \times M`.
+
+    Returns
+    -------
+    np.ndarray
+        Peak map :math:`\varphi` of size :math:`N \times M`.
+
+    References
+    ----------
+    .. [1] Sciacchitano, A., Wieneke, B., & Scarano, F. (2013). PIV uncertainty quantification by image matching.
+        Measurement Science and Technology, 24 (4). https://doi.org/10.1088/0957-0233/24/4/045302
+    """
 
     # Calculate peaks values
     imgPI_C = imgPI[1:-1, 1:-1]
@@ -108,7 +138,7 @@ def find_peaks(imgPI):
 
 
 @jit(nopython=True, parallel=True, cache=True)
-def accumulate_windowed_statistics(D, c, weights, wr, N, mu, sigma, delta, coeff, ROI):
+def disparity_ensemble_statistics(D, c, weights, wr, N, mu, sigma, delta, coeff, ROI):
     r"""Numba accelerated loop for computing the disparity statistics inside a window of radius `wr`.
 
     Parameters
@@ -129,6 +159,10 @@ def accumulate_windowed_statistics(D, c, weights, wr, N, mu, sigma, delta, coeff
         Standard deviation of the disparity map :math:`\sigma`.
     delta : np.ndarray
          Instantaneous error estimation :math:`\hat{\delta}` defined by Eq. (4) [1]_.
+    coeff : float
+        Confidence interval coefficient.
+    ROI : tuple
+        Row and column indices of the ROI: (`i_min`, `i_max`, `j_min`, `j_max`).
 
     References
     ----------
@@ -188,11 +222,7 @@ def accumulate_windowed_statistics(D, c, weights, wr, N, mu, sigma, delta, coeff
                     delta[k, i, j] = np.sqrt(mu[k, i, j] ** 2 + (sigma[k, i, j] ** 2 / N[i, j]))
 
 
-def disparity_vector_computation(
-    warped_image_pair,
-    radius=2.0,
-    sliding_window_size=16,
-):
+def disparity_vector_computation(warped_image_pair, radius=2.0, sliding_window_size=16):
     r"""Python implementation of `Sciacchitano-Wieneke-Scarano` disparity vector computation algorithm for PIV
     Uncertainty Quantification by image matching [1]_.
 
@@ -200,12 +230,10 @@ def disparity_vector_computation(
     ----------
     warped_image_pair : np.ndarray
         Warped image pair :math:`\hat{\mathbf{I}} = (\hat{I}_0, \hat{I}_1)^{\top}` of size :math:`2 \times N \times M`.
-    threshold_ratio : float, default: 0.5
-        Threshold ratio multiplier for threshold value based on Otsu's method.
     radius : int, default: 2
         Discrete particle position search radius from the centroid defined by :math:`\varphi`.
-    sigma : int or None, default: None
-        To perform gaussian smoothing of the image intensity product :math:`\Pi`.
+    sliding_window_size : int, default: 16
+        Sliding window average subtraction window size.
 
     Returns
     -------
@@ -213,9 +241,6 @@ def disparity_vector_computation(
         Disparity map :math:`D` of size :math:`2 \times N \times M` defined by Eq. (2) [1]_.
     c : np.ndarray
         Disparity weight map :math:`c` of size :math:`N \times M` defined by Eq. (3) [1]_.
-    peaks : np.ndarray
-        Binary peak map :math:`\varphi` of size :math:`N \times M` containing the peak positions of the particle
-        positions.
 
     References
     ----------
@@ -279,69 +304,3 @@ def disparity_vector_computation(
     D = np.stack((X[1] - X[0], Y[1] - Y[0])) * (imgPI > 0) * img_pos
 
     return D, c
-
-
-# def disparity_statistics(D, c, window_size=16, window="gaussian", ROI=None):
-#     r"""Calculate disparity statistics inside a window.
-
-#     Parameters
-#     ----------
-#     D : np.ndarray
-#         Disparity map :math:`D` of size :math:`2 \times N \times M` defined by Eq. (2) [1]_.
-#     c : np.ndarray
-#         Disparity weight map :math:`c` of size :math:`N \times M` defined by Eq. (3) [1]_.
-#     window_size : int, default: 16
-#         Size of the window.
-#     window : {"gaussian", "tophat"}, default: "gaussian"
-#         Window type for the disparity statistics.
-
-#     Returns
-#     -------
-#     N : np.ndarray
-#         Number of peaks inside the window.
-#     mu : np.ndarray
-#         Mean disparity map of size :math:`2 \times N \times M` defined by Eq. (3) [1]_.
-#     sigma : np.ndarray
-#         Standard deviation disparity map of size :math:`2 \times N \times M` defined by Eq. (3) [1]_.
-#     delta : np.ndarray
-#         Instantaneous error map of size :math:`2 \times N \times M` defined by Eq. (3) [1]_.
-
-#     References
-#     ----------
-#     .. [1] Sciacchitano, A., Wieneke, B., & Scarano, F. (2013). PIV uncertainty quantification by image matching.
-#         Measurement Science and Technology, 24 (4). https://doi.org/10.1088/0957-0233/24/4/045302.
-#     """
-
-#     # Generate windowed
-#     n, m = D.shape[1:]
-
-#     # Gaussian windowing
-#     wr = int(np.round(window_size / 2))
-#     if window == "gaussian":
-#         coeff = 1.75
-#         weights = scipy.signal.windows.gaussian(
-#             int(np.round(wr * 2 * coeff)) + 1, int(np.round(wr / 2 * coeff))
-#         )
-#     elif window == "tophat":
-#         coeff = 1
-#         weights = np.ones(wr * 2 * coeff + 1)
-#     else:
-#         raise ValueError(f"Window type `{window}` not valid.")
-
-#     weights = np.outer(weights, weights)  # 2D windowing weights
-
-#     # Uncertainty statistics
-#     N = np.zeros((n, m))
-#     mu = np.zeros((2, n, m))
-#     sigma = np.zeros((2, n, m))
-#     delta = np.zeros((2, n, m))
-
-#     if ROI is None:
-#         ROI = (0, n, 0, m)
-#     else:
-#         ROI = tuple(ROI)
-
-#     # Accumulate disparity statistics within the window (numba accelerated loop)
-#     accumulate_windowed_statistics(D, c, weights, wr, N, mu, sigma, delta, coeff, ROI)
-
-#     return N, mu, sigma, delta
