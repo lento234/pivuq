@@ -112,10 +112,6 @@ def find_peaks(imgPI) -> np.ndarray:
     np.ndarray
         Peak map :math:`\varphi` of size :math:`N \times M`.
 
-    References
-    ----------
-    .. [1] Sciacchitano, A., Wieneke, B., & Scarano, F. (2013). PIV uncertainty quantification by image matching.
-        Measurement Science and Technology, 24 (4). https://doi.org/10.1088/0957-0233/24/4/045302
     """
 
     # Calculate peaks values
@@ -238,14 +234,9 @@ def disparity_vector_computation(warped_image_pair, radius=2.0, sliding_window_s
     Returns
     -------
     D : np.ndarray
-        Disparity map :math:`D` of size :math:`2 \times N \times M` defined by Eq. (2) [1]_.
+        Disparity map :math:`D` of size :math:`2 \times N \times M` defined by Eq. (2).
     c : np.ndarray
-        Disparity weight map :math:`c` of size :math:`N \times M` defined by Eq. (3) [1]_.
-
-    References
-    ----------
-    .. [1] Sciacchitano, A., Wieneke, B., & Scarano, F. (2013). PIV uncertainty quantification by image matching.
-        Measurement Science and Technology, 24 (4). https://doi.org/10.1088/0957-0233/24/4/045302.
+        Disparity weight map :math:`c` of size :math:`N \times M` defined by Eq. (3).
     """
 
     frame_a, frame_b = warped_image_pair

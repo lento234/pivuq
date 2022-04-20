@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.interpolate
 import skimage.transform
+from numba import jit, prange
 
 
 def warp_skimage(frame, U, coords, order=1, mode="edge") -> np.ndarray:
@@ -34,6 +35,87 @@ def warp_skimage(frame, U, coords, order=1, mode="edge") -> np.ndarray:
     u, v = U
 
     warped_frame = skimage.transform.warp(frame, np.array([row_coords - v, col_coords - u]), order=order, mode=mode)
+
+    return warped_frame
+
+
+@jit(nopython=True, parallel=True, cache=True)
+def whittaker_interpolation(im, xi, yi, r=3):
+    r"""Whittaker-Shannon interpolation [1]_.
+
+    Parameters
+    ----------
+    im : np.ndarray
+        Image frame of shape (rows, cols).
+    xi, yi : np.ndarray
+        The `x` and `y`-coordinates at which to evaluate the interpolated values of shape (rows, cols).
+    r : int, default: 3
+        Radius of the interpolation stencil.
+
+    Returns
+    -------
+    np.ndarray
+        Interpolated image frame.
+
+    References
+    ----------
+    .. [1] Wikipedia contributors. (2022, March 18). Whittaker-Shannon interpolation formula. In Wikipedia, The Free
+        Encyclopedia. Retrieved 12:34, April 20, 2022, from
+        https://en.wikipedia.org/w/index.php?title=Whittaker%E2%80%93Shannon_interpolation_formula&oldid=1077909297
+    """
+    n, m = im.shape
+
+    im_interp = np.zeros_like(im)
+
+    for i in prange(n):
+        for j in prange(m):
+
+            xn = xi[i, j]
+            yn = yi[i, j]
+            xn_a = int(xn)
+            yn_a = int(yn)
+
+            i0 = max(xn_a - r, 0)
+            i1 = min(xn_a + r, n - 1)
+            j0 = max(yn_a - r, 0)
+            j1 = min(yn_a + r, m - 1)
+
+            for k in range(i0, i1 + 1):
+                sincx_a = np.sinc(k - xn)
+                for h in range(j0, j1 + 1):
+                    sincy_a = np.sinc(h - yn)
+                    im_interp[i, j] += im[k, h] * sincx_a * sincy_a
+
+    return im_interp
+
+
+def warp_whittaker(frame, U, coords, radius=3, **kwargs) -> np.ndarray:
+    """Warp image using Whittaker-Shannon interpolation
+
+    Parameters
+    ----------
+    frame : np.ndarray
+        image frame.
+    U : np.ndarray
+        pixel-wise 2D velocity field.
+    coords : np.ndarray
+        2D image coordinates (row, cols).
+
+    Returns
+    -------
+    np.ndarray
+        Warped image frame
+
+    See Also
+    --------
+    whittaker_interpolation : Whittaker-Shannon interpolation.
+    """
+
+    row_coords, col_coords = coords
+
+    u, v = U
+
+    warped_frame = whittaker_interpolation(frame, row_coords - v, col_coords - u, r=radius)
 
     return warped_frame
 
@@ -72,7 +154,7 @@ def interpolate_to_pixel(U, imshape, kind="linear") -> np.ndarray:
     return np.stack((u_px, v_px))
 
 
-def warp(image_pair, U, velocity_upsample_kind="linear", direction="center", nsteps=1, order=1) -> np.ndarray:
+def warp(image_pair, U, velocity_upsample_kind="linear", direction="center", nsteps=1, order=-1) -> np.ndarray:
     r"""Warp image pair pixel-wise to each other using `skimage.transform.warp`.
 
     Parameters
@@ -89,7 +171,8 @@ def warp(image_pair, U, velocity_upsample_kind="linear", direction="center", nst
         Number of sub-steps to use for warping to improve accuracy. Although, the original flow estimator (e.g. PIV)
         most likely uses :math:`n_{\mathrm{steps}}=1`.
     order : 1-5, default: 1
-        The order of interpolation for `skimage.transform.warp`.
+        The order of interpolation for `skimage.transform.warp`. If order is negative, using `Whittaker-Shannon
+        interpolation`.
 
     Returns
     -------
@@ -109,15 +192,20 @@ def warp(image_pair, U, velocity_upsample_kind="linear", direction="center", nst
     # generate mapping grid
     image_coords = np.meshgrid(np.arange(nr), np.arange(nc), indexing="ij")
 
+    if order < 0:
+        warp_func = warp_whittaker
+    else:
+        warp_func = warp_skimage
+
     # warp images in nsteps
     for istep in range(nsteps):
         if direction == "forward":
-            warped_frame_a = warp_skimage(warped_frame_a, U_substep, image_coords, order=order)
+            warped_frame_a = warp_func(warped_frame_a, U_substep, image_coords, order=order)
         elif direction == "backward":
-            warped_frame_b = warp_skimage(warped_frame_b, -U_substep, image_coords, order=order)
+            warped_frame_b = warp_func(warped_frame_b, -U_substep, image_coords, order=order)
         elif direction == "center":
-            warped_frame_a = warp_skimage(warped_frame_a, 0.5 * U_substep, image_coords, order=order)
-            warped_frame_b = warp_skimage(warped_frame_b, -0.5 * U_substep, image_coords, order=order)
+            warped_frame_a = warp_func(warped_frame_a, 0.5 * U_substep, image_coords, order=order)
+            warped_frame_b = warp_func(warped_frame_b, -0.5 * U_substep, image_coords, order=order)
         else:
             raise ValueError(f"Unknown warping direction: {direction}.")
 
