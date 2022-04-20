@@ -53,7 +53,7 @@ def ilk(
     skimage.transform.warp : Warp an image according to a given coordinate transformation.
     """
     # Image dimensions
-    nr, nc = image_pair.shape[1:]
+    nr, nc = image_pair[0].shape
 
     # Warp image: $\hat{\mathbf{I}}$
     warped_frame_a, warped_frame_b = warping.warp(
