@@ -28,8 +28,9 @@ def warp_skimage(frame, U, coords, order=1, mode="edge") -> np.ndarray:
     --------
     skimage.transform.warp : Warp an image according to a given coordinate transformation.
     """
+
     row_coords, col_coords = coords
-    # Warp
+
     u, v = U
 
     warped_frame = skimage.transform.warp(frame, np.array([row_coords - v, col_coords - u]), order=order, mode=mode)
@@ -61,7 +62,7 @@ def interpolate_to_pixel(U, imshape, kind="linear") -> np.ndarray:
     ws_x = int(np.round(imshape[0] / nr))
     ws_y = int(np.round(imshape[1] / nc))
 
-    x, y = np.arange(nr) * ws_x + ws_x // 2, np.arange(nc) * ws_y + ws_y / 2
+    x, y = np.arange(nr) * ws_x + ws_x // 2, np.arange(nc) * ws_y + ws_y // 2
     xi, yi = np.arange(imshape[0]), np.arange(imshape[1])
 
     # Interpolate to pixel level
@@ -71,14 +72,7 @@ def interpolate_to_pixel(U, imshape, kind="linear") -> np.ndarray:
     return np.stack((u_px, v_px))
 
 
-def warp(
-    image_pair,
-    U,
-    velocity_upsample_kind="linear",
-    direction="center",
-    nsteps=1,
-    order=1,
-) -> np.ndarray:
+def warp(image_pair, U, velocity_upsample_kind="linear", direction="center", nsteps=1, order=1) -> np.ndarray:
     r"""Warp image pair pixel-wise to each other using `skimage.transform.warp`.
 
     Parameters
@@ -124,5 +118,7 @@ def warp(
         elif direction == "center":
             warped_frame_a = warp_skimage(warped_frame_a, 0.5 * U_substep, image_coords, order=order)
             warped_frame_b = warp_skimage(warped_frame_b, -0.5 * U_substep, image_coords, order=order)
+        else:
+            raise ValueError(f"Unknown warping direction: {direction}.")
 
     return np.stack((warped_frame_a, warped_frame_b))
