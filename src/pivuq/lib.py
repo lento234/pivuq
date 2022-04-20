@@ -99,12 +99,7 @@ def find_peaks(imgPI):
 
     # Locate peaks
     peaks = np.zeros_like(imgPI)
-    peaks[1:-1, 1:-1] = (
-        (imgPI_C > imgPI_E)
-        & (imgPI_C > imgPI_W)
-        & (imgPI_C > imgPI_N)
-        & (imgPI_C > imgPI_S)
-    )
+    peaks[1:-1, 1:-1] = (imgPI_C > imgPI_E) & (imgPI_C > imgPI_W) & (imgPI_C > imgPI_N) & (imgPI_C > imgPI_S)
 
     # Threshold background
     peaks *= np.sqrt(np.abs(imgPI))
@@ -187,14 +182,10 @@ def accumulate_windowed_statistics(D, c, weights, wr, N, mu, sigma, delta, coeff
                     mu[k, i, j] = np.sum(c_w * d_w) / np.sum(c_w)
 
                     # Std. dev. disparity (rms): Eq. (3) (right)
-                    sigma[k, i, j] = np.sqrt(
-                        np.sum(c_w * (d_w - mu[k, i, j]) ** 2) / np.sum(c_w)
-                    )
+                    sigma[k, i, j] = np.sqrt(np.sum(c_w * (d_w - mu[k, i, j]) ** 2) / np.sum(c_w))
 
                     # Instantanous error estimation
-                    delta[k, i, j] = np.sqrt(
-                        mu[k, i, j] ** 2 + (sigma[k, i, j] ** 2 / N[i, j])
-                    )
+                    delta[k, i, j] = np.sqrt(mu[k, i, j] ** 2 + (sigma[k, i, j] ** 2 / N[i, j]))
 
 
 def disparity_vector_computation(

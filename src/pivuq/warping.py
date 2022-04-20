@@ -32,9 +32,7 @@ def warp_skimage(frame, U, coords, order=1, mode="edge") -> np.ndarray:
     # Warp
     u, v = U
 
-    warped_frame = skimage.transform.warp(
-        frame, np.array([row_coords - v, col_coords - u]), order=order, mode=mode
-    )
+    warped_frame = skimage.transform.warp(frame, np.array([row_coords - v, col_coords - u]), order=order, mode=mode)
 
     return warped_frame
 
@@ -120,19 +118,11 @@ def warp(
     # warp images in nsteps
     for istep in range(nsteps):
         if direction == "forward":
-            warped_frame_a = warp_skimage(
-                warped_frame_a, U_substep, image_coords, order=order
-            )
+            warped_frame_a = warp_skimage(warped_frame_a, U_substep, image_coords, order=order)
         elif direction == "backward":
-            warped_frame_b = warp_skimage(
-                warped_frame_b, -U_substep, image_coords, order=order
-            )
+            warped_frame_b = warp_skimage(warped_frame_b, -U_substep, image_coords, order=order)
         elif direction == "center":
-            warped_frame_a = warp_skimage(
-                warped_frame_a, 0.5 * U_substep, image_coords, order=order
-            )
-            warped_frame_b = warp_skimage(
-                warped_frame_b, -0.5 * U_substep, image_coords, order=order
-            )
+            warped_frame_a = warp_skimage(warped_frame_a, 0.5 * U_substep, image_coords, order=order)
+            warped_frame_b = warp_skimage(warped_frame_b, -0.5 * U_substep, image_coords, order=order)
 
     return np.stack((warped_frame_a, warped_frame_b))

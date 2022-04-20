@@ -143,9 +143,7 @@ def sws(
     wr = int(np.round(window_size / 2))
     if window == "gaussian":
         coeff = 1.75
-        weights = scipy.signal.windows.gaussian(
-            int(np.round(wr * 2 * coeff)) + 1, int(np.round(wr / 2 * coeff))
-        )
+        weights = scipy.signal.windows.gaussian(int(np.round(wr * 2 * coeff)) + 1, int(np.round(wr / 2 * coeff)))
     elif window == "tophat":
         coeff = 1
         weights = np.ones(wr * 2 * coeff + 1)
@@ -166,9 +164,7 @@ def sws(
         ROI = tuple(ROI)
 
     # Accumulate disparity statistics within the window (numba accelerated loop)
-    lib.accumulate_windowed_statistics(
-        D, c, weights, wr, N, mu, sigma, delta, coeff, ROI
-    )
+    lib.accumulate_windowed_statistics(D, c, weights, wr, N, mu, sigma, delta, coeff, ROI)
 
     # Coordinates
     Y, X = np.meshgrid(np.arange(nr), np.arange(nc), indexing="ij")
