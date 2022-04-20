@@ -41,7 +41,7 @@ def warp_skimage(frame, U, coords, order=1, mode="edge") -> np.ndarray:
 
 @jit(nopython=True, parallel=True, cache=True)
 def whittaker_interpolation(im, xi, yi, r=3):
-    r"""Whittaker-Shannon interpolation.
+    r"""Whittaker-Shannon interpolation [1]_.
 
     Parameters
     ----------
