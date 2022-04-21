@@ -134,7 +134,7 @@ def find_peaks(imgPI) -> np.ndarray:
 
 
 @jit(nopython=True, parallel=True, cache=True)
-def disparity_ensemble_statistics(D, c, weights, wr, N, mu, sigma, delta, coeff, ROI):
+def disparity_ensemble_statistics(D, c, weights, wr, coeff, ROI):
     r"""Numba accelerated loop for computing the disparity statistics inside a window of radius `wr`.
 
     Parameters
@@ -147,18 +147,21 @@ def disparity_ensemble_statistics(D, c, weights, wr, N, mu, sigma, delta, coeff,
         Windowing weights of size :math:`N \times M` defined by Gaussian or tophat filter.
     wr : int
         Window radius.
-    N : np.ndarray
-        Number of particle peaks in the window.
-    mu : np.ndarray
-        Mean of the disparity map :math:`\mu` in the window.
-    sigma : np.ndarray
-        Standard deviation of the disparity map :math:`\sigma`.
-    delta : np.ndarray
-         Instantaneous error estimation :math:`\hat{\delta}` defined by Eq. (4) [1]_.
     coeff : float
         Confidence interval coefficient.
     ROI : tuple
         Row and column indices of the ROI: (`i_min`, `i_max`, `j_min`, `j_max`).
+
+    Returns
+    -------
+    delta : np.ndarray
+        Instantaneous error estimation map of size :math:`2 \times N \times M` defined by Eq. (3) [1]_.
+    N : np.ndarray
+        Number of peaks inside the window.
+    mu : np.ndarray
+        Mean disparity map of size :math:`2 \times N \times M` defined by Eq. (3) [1]_.
+    sigma : np.ndarray
+        Standard deviation disparity map of size :math:`2 \times N \times M` defined by Eq. (3) [1]_.
 
     References
     ----------
@@ -167,6 +170,12 @@ def disparity_ensemble_statistics(D, c, weights, wr, N, mu, sigma, delta, coeff,
     """
     n, m = D.shape[1:]
     wr_eff = int(np.round(coeff * wr))
+
+    # Uncertainty statistics
+    N = np.zeros((n, m))
+    mu = np.zeros((2, n, m))
+    sigma = np.zeros((2, n, m))
+    delta = np.zeros((2, n, m))
 
     for i in prange(n):
 
@@ -216,6 +225,8 @@ def disparity_ensemble_statistics(D, c, weights, wr, N, mu, sigma, delta, coeff,
 
                     # Instantanous error estimation
                     delta[k, i, j] = np.sqrt(mu[k, i, j] ** 2 + (sigma[k, i, j] ** 2 / N[i, j]))
+
+    return delta, N, mu, sigma
 
 
 def disparity_vector_computation(warped_image_pair, radius=2.0, sliding_window_size=16):
