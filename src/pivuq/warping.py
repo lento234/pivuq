@@ -1,3 +1,5 @@
+from functools import partial
+
 import numpy as np
 import scipy.interpolate
 import skimage.transform
@@ -65,7 +67,7 @@ def whittaker_interpolation(im, xi, yi, r=3):
     """
     n, m = im.shape
 
-    im_interp = np.zeros_like(im)
+    im_interp = np.zeros((n, m), dtype=np.float64)
 
     for i in prange(n):
         for j in prange(m):
@@ -86,10 +88,12 @@ def whittaker_interpolation(im, xi, yi, r=3):
                     sincy_a = np.sinc(h - yn)
                     im_interp[i, j] += im[k, h] * sincx_a * sincy_a
 
+            im_interp[i, j] = max(im_interp[i, j], 0)  # strictly positive
+
     return im_interp
 
 
-def warp_whittaker(frame, U, coords, radius=3, **kwargs) -> np.ndarray:
+def warp_whittaker(frame, U, coords, radius=3) -> np.ndarray:
     """Warp image using Whittaker-Shannon interpolation
 
     Parameters
@@ -100,6 +104,8 @@ def warp_whittaker(frame, U, coords, radius=3, **kwargs) -> np.ndarray:
         pixel-wise 2D velocity field.
     coords : np.ndarray
         2D image coordinates (row, cols).
+    radius : int, default: 3
+        Radius of the interpolation stencil.
 
     Returns
     -------
@@ -154,7 +160,9 @@ def interpolate_to_pixel(U, imshape, kind="linear") -> np.ndarray:
     return np.stack((u_px, v_px))
 
 
-def warp(image_pair, U, velocity_upsample_kind="linear", direction="center", nsteps=1, order=-1) -> np.ndarray:
+def warp(
+    image_pair, U, velocity_upsample_kind="linear", direction="center", nsteps=1, order=-1, radius=2
+) -> np.ndarray:
     r"""Warp image pair pixel-wise to each other using `skimage.transform.warp`.
 
     Parameters
@@ -173,6 +181,8 @@ def warp(image_pair, U, velocity_upsample_kind="linear", direction="center", nst
     order : 1-5, default: 1
         The order of interpolation for `skimage.transform.warp`. If order is negative, using `Whittaker-Shannon
         interpolation`.
+    radius : int, default: 3
+        Radius of the Whittaker-Shannon interpolation stencil.
 
     Returns
     -------
@@ -193,19 +203,19 @@ def warp(image_pair, U, velocity_upsample_kind="linear", direction="center", nst
     image_coords = np.meshgrid(np.arange(nr), np.arange(nc), indexing="ij")
 
     if order < 0:
-        warp_func = warp_whittaker
+        warp_func = partial(warp_whittaker, coords=image_coords, radius=radius)
     else:
-        warp_func = warp_skimage
+        warp_func = partial(warp_skimage, coords=image_coords, order=order)
 
     # warp images in nsteps
     for istep in range(nsteps):
         if direction == "forward":
-            warped_frame_a = warp_func(warped_frame_a, U_substep, image_coords, order=order)
+            warped_frame_a = warp_func(warped_frame_a, U_substep)
         elif direction == "backward":
-            warped_frame_b = warp_func(warped_frame_b, -U_substep, image_coords, order=order)
+            warped_frame_b = warp_func(warped_frame_b, -U_substep)
         elif direction == "center":
-            warped_frame_a = warp_func(warped_frame_a, 0.5 * U_substep, image_coords, order=order)
-            warped_frame_b = warp_func(warped_frame_b, -0.5 * U_substep, image_coords, order=order)
+            warped_frame_a = warp_func(warped_frame_a, 0.5 * U_substep)
+            warped_frame_b = warp_func(warped_frame_b, -0.5 * U_substep)
         else:
             raise ValueError(f"Unknown warping direction: {direction}.")
 
