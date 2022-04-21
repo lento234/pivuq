@@ -186,19 +186,13 @@ def sws(
 
     weights = np.outer(weights, weights)  # 2D windowing weights
 
-    # Uncertainty statistics
-    N = np.zeros((nr, nc))
-    mu = np.zeros((2, nr, nc))
-    sigma = np.zeros((2, nr, nc))
-    delta = np.zeros((2, nr, nc))
-
     if ROI is None:
         ROI = (0, nr, 0, nc)
     else:
         ROI = tuple(ROI)
 
     # Accumulate disparity statistics within the window (numba accelerated loop)
-    lib.disparity_ensemble_statistics(D, c, weights, wr, N, mu, sigma, delta, coeff, ROI)
+    delta, N, mu, sigma = lib.disparity_ensemble_statistics(D, c, weights, wr, coeff, ROI)
 
     # Coordinates
     Y, X = np.meshgrid(np.arange(nr), np.arange(nc), indexing="ij")
