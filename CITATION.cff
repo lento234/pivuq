@@ -4,7 +4,7 @@ authors:
 - family-names: "Manickathan"
   given-names: "Lento"
   orcid: "https://orcid.org/0000-0002-0425-4679"
-title: "PIVUQ: PIV Uncertainty Quantification"
+title: "PIVUQ: Uncertainty Quantification Toolkit for Quantitative Flow Visualization"
 version: 0.3.1
 doi: 10.5281/zenodo.6482947
 date-released: 2022-04-25
