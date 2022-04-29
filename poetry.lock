@@ -66,7 +66,7 @@ testing = ["covdefaults (>=1.2.0)", "coverage (>=4)", "pytest (>=4)", "pytest-co
 
 [[package]]
 name = "fonttools"
-version = "4.33.2"
+version = "4.33.3"
 description = "Tools to manipulate font files"
 category = "main"
 optional = false
@@ -405,7 +405,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
 
 [[package]]
 name = "tifffile"
-version = "2022.4.22"
+version = "2022.4.26"
 description = "Read and write TIFF files"
 category = "main"
 optional = false
@@ -486,8 +486,8 @@ filelock = [
     {file = "filelock-3.6.0.tar.gz", hash = "sha256:9cd540a9352e432c7246a48fe4e8712b10acb1df2ad1f30e8c070b82ae1fed85"},
 ]
 fonttools = [
-    {file = "fonttools-4.33.2-py3-none-any.whl", hash = "sha256:b4da40696829845ea8c1cb33ce51c552179754cbee7ab4e8b96a6bcf421f437a"},
-    {file = "fonttools-4.33.2.zip", hash = "sha256:696fe922a271584c3ec8325ba31d4001a4fd6c4953b22900b767f1cb53ce1044"},
+    {file = "fonttools-4.33.3-py3-none-any.whl", hash = "sha256:f829c579a8678fa939a1d9e9894d01941db869de44390adb49ce67055a06cc2a"},
+    {file = "fonttools-4.33.3.zip", hash = "sha256:c0fdcfa8ceebd7c1b2021240bd46ef77aa8e7408cf10434be55df52384865f8e"},
 ]
 identify = [
     {file = "identify-2.4.12-py2.py3-none-any.whl", hash = "sha256:5f06b14366bd1facb88b00540a1de05b69b310cbc2654db3c7e07fa3a4339323"},
@@ -879,8 +879,8 @@ six = [
     {file = "six-1.16.0.tar.gz", hash = "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926"},
 ]
 tifffile = [
-    {file = "tifffile-2022.4.22-py3-none-any.whl", hash = "sha256:2a18ba74173074121e118ad9cd06fb030ac8354abd1d94adddf0b3ce614b0438"},
-    {file = "tifffile-2022.4.22.tar.gz", hash = "sha256:2b8003c834883103131bd3e97388091b59a3a2344e9d8e1ed48aebeb64f86763"},
+    {file = "tifffile-2022.4.26-py3-none-any.whl", hash = "sha256:e36b4e4a04e62f374893ddc91927bb1a8524a6aea0534fc23fe4d318b24a6573"},
+    {file = "tifffile-2022.4.26.tar.gz", hash = "sha256:018054f54b3c2fc06842b224077d059340309addfcd94263988c05d7f19724e9"},
 ]
 toml = [
     {file = "toml-0.10.2-py2.py3-none-any.whl", hash = "sha256:806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b"},
