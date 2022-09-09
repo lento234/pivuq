@@ -178,7 +178,7 @@ def warp(
     nsteps : int, default: 1
         Number of sub-steps to use for warping to improve accuracy. Although, the original flow estimator (e.g. PIV)
         most likely uses :math:`n_{\mathrm{steps}}=1`.
-    order : 1-5, default: 1
+    order : -1, 1, 2 (bug), 3, default: -1
         The order of interpolation for `skimage.transform.warp`. If order is negative, using `Whittaker-Shannon
         interpolation`.
     radius : int, default: 3
@@ -202,10 +202,14 @@ def warp(
     # generate mapping grid
     image_coords = np.meshgrid(np.arange(nr), np.arange(nc), indexing="ij")
 
-    if order < 0:
+    if order == -1:
         warp_func = partial(warp_whittaker, coords=image_coords, radius=radius)
-    else:
+    elif order == 1 or order == 3:
         warp_func = partial(warp_skimage, coords=image_coords, order=order)
+    else:
+        raise ValueError(
+            "Use order -1 for Whittaker-shannon interpolation and 1 or 3 for bi-linear and bi-cubic respectively."
+        )
 
     # warp images in nsteps
     for istep in range(nsteps):

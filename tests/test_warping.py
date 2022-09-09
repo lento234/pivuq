@@ -62,35 +62,19 @@ def test_warp():
     )
     assert_allclose(warped_frame_a, warped_frame_b)
 
-    warped_frame_a, warped_frame_b = pivuq.warp(
-        (frame_a, frame_b),
-        np.ones((2, 2, 2)),
-        nsteps=1,
-        order=2,
-    )
-    assert_allclose(warped_frame_a, warped_frame_b)
+    # warped_frame_a, warped_frame_b = pivuq.warp(
+    #    (frame_a, frame_b),
+    #    np.ones((2, 2, 2)),
+    #    nsteps=1,
+    #    order=2,
+    # )
+    # assert_allclose(warped_frame_a, warped_frame_b)
 
     warped_frame_a, warped_frame_b = pivuq.warp(
         (frame_a, frame_b),
         np.ones((2, 2, 2)),
         nsteps=1,
         order=3,
-    )
-    assert_allclose(warped_frame_a, warped_frame_b)
-
-    warped_frame_a, warped_frame_b = pivuq.warp(
-        (frame_a, frame_b),
-        np.ones((2, 2, 2)),
-        nsteps=1,
-        order=4,
-    )
-    assert_allclose(warped_frame_a, warped_frame_b)
-
-    warped_frame_a, warped_frame_b = pivuq.warp(
-        (frame_a, frame_b),
-        np.ones((2, 2, 2)),
-        nsteps=1,
-        order=5,
     )
     assert_allclose(warped_frame_a, warped_frame_b)
 
