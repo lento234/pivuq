@@ -90,6 +90,7 @@ def sws(
     image_pair,
     U,
     window_size=16,
+    grid_size=4,
     window="gaussian",
     radius=1,
     sliding_window_subtraction=True,
@@ -110,6 +111,8 @@ def sws(
         Sparse or dense 2D velocity field :math:`\mathbf{U} = (u, v)^{\top}` of (2 x U_rows x U_cols).
     window_size : int, default: 16
         Window size around the pixel to consider the disparity ensemble.
+    grid_size: int, default: 4
+        Disparity ensemble grid resolution in pixels.
     window : {"gaussian", "tophat"}, default: "gaussian"
         Window type for the disparity statistics.
     radius : int, default: 1
@@ -192,9 +195,11 @@ def sws(
         ROI = tuple(ROI)
 
     # Accumulate disparity statistics within the window (numba accelerated loop)
-    delta, N, mu, sigma = lib.disparity_ensemble_statistics(D, c, weights, wr, coeff, ROI)
+    delta, N, mu, sigma = lib.disparity_ensemble_statistics(D, c, weights, wr, grid_size, coeff, ROI)
 
     # Coordinates
-    Y, X = np.meshgrid(np.arange(nr), np.arange(nc), indexing="ij")
+    Y, X = np.meshgrid(
+        np.arange(grid_size // 2, nr, grid_size), np.arange(grid_size // 2, nc, grid_size), indexing="ij"
+    )
 
     return X, Y, delta, N, mu, sigma

@@ -134,7 +134,7 @@ def find_peaks(imgPI) -> np.ndarray:
 
 
 @jit(nopython=True, parallel=True, cache=True)
-def disparity_ensemble_statistics(D, c, weights, wr, coeff, ROI):
+def disparity_ensemble_statistics(D, c, weights, wr, grid_size, coeff, ROI):
     r"""Numba accelerated loop for computing the disparity statistics inside a window of radius `wr`.
 
     Parameters
@@ -147,6 +147,8 @@ def disparity_ensemble_statistics(D, c, weights, wr, coeff, ROI):
         Windowing weights of size :math:`N \times M` defined by Gaussian or tophat filter.
     wr : int
         Window radius.
+    ws : int
+        Disparity resolution size.
     coeff : float
         Confidence interval coefficient.
     ROI : tuple
@@ -168,7 +170,8 @@ def disparity_ensemble_statistics(D, c, weights, wr, coeff, ROI):
     .. [1] Sciacchitano, A., Wieneke, B., & Scarano, F. (2013). PIV uncertainty quantification by image matching.
         Measurement Science and Technology, 24 (4). https://doi.org/10.1088/0957-0233/24/4/045302.
     """
-    n, m = D.shape[1:]
+    n, m = D.shape[1] // grid_size, D.shape[2] // grid_size
+
     wr_eff = int(np.round(coeff * wr))
 
     # Uncertainty statistics
@@ -177,20 +180,20 @@ def disparity_ensemble_statistics(D, c, weights, wr, coeff, ROI):
     sigma = np.zeros((2, n, m))
     delta = np.zeros((2, n, m))
 
-    for i in prange(n):
-
+    for ii in prange(n):
+        i = ii * grid_size + grid_size // 2
         # Row bounds of windw
         i0 = max(i - wr_eff, 0)
-        i1 = min(i + wr_eff, n - 1)
+        i1 = min(i + wr_eff, n * grid_size - 1)
 
-        for j in prange(m):
-
+        for jj in prange(m):
+            j = jj * grid_size + grid_size // 2
             # Only calculate inside ROI
             if (i >= ROI[0]) and (i <= ROI[1]) and (j >= ROI[2]) and (j <= ROI[3]):
 
                 # Column bounds of windw
                 j0 = max(j - wr_eff, 0)
-                j1 = min(j + wr_eff, m - 1)
+                j1 = min(j + wr_eff, m * grid_size - 1)
 
                 # Filter windowed
                 weights_w = weights[
@@ -202,7 +205,7 @@ def disparity_ensemble_statistics(D, c, weights, wr, coeff, ROI):
                 c_w = c[i0:i1, j0:j1] * weights_w
 
                 # Number of peaks inside window # Bug in original code?
-                N[i, j] = np.maximum(np.sum((c_w > 0) * weights_w), 1)
+                N[ii, jj] = np.maximum(np.sum((c_w > 0) * weights_w), 1)
 
                 for k in range(2):
                     # Disparity windowed
@@ -218,13 +221,13 @@ def disparity_ensemble_statistics(D, c, weights, wr, coeff, ROI):
                     c_w = c_w[valid_mask]
 
                     # Mean disparity (bias): Eq. (3) (left)
-                    mu[k, i, j] = np.sum(c_w * d_w) / np.sum(c_w)
+                    mu[k, ii, jj] = np.sum(c_w * d_w) / np.sum(c_w)
 
                     # Std. dev. disparity (rms): Eq. (3) (right)
-                    sigma[k, i, j] = np.sqrt(np.sum(c_w * (d_w - mu[k, i, j]) ** 2) / np.sum(c_w))
+                    sigma[k, ii, jj] = np.sqrt(np.sum(c_w * (d_w - mu[k, ii, jj]) ** 2) / np.sum(c_w))
 
                     # Instantanous error estimation
-                    delta[k, i, j] = np.sqrt(mu[k, i, j] ** 2 + (sigma[k, i, j] ** 2 / N[i, j]))
+                    delta[k, ii, jj] = np.sqrt(mu[k, ii, jj] ** 2 + (sigma[k, ii, jj] ** 2 / N[ii, jj]))
 
     return delta, N, mu, sigma
 
