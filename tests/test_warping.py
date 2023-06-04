@@ -5,7 +5,6 @@ import pivuq
 
 
 def test_warp_skimage():
-
     frame = np.pad(np.ones((3, 3)), 2)
     U = np.ones((2, *frame.shape))
     coords = np.meshgrid(np.arange(frame.shape[0]), np.arange(frame.shape[1]), indexing="ij")
@@ -38,7 +37,6 @@ def test_warp_skimage():
 
 
 def test_interpolate_to_pixel():
-
     U = np.ones((2, 3, 3))
     imshape = (10, 10)
     kind = "linear"
@@ -49,7 +47,6 @@ def test_interpolate_to_pixel():
 
 
 def test_warp():
-
     frame_a = np.pad(np.ones((3, 3)), 2)
     frame_b = np.roll(frame_a, 1, axis=(0, 1))
 

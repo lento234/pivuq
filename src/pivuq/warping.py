@@ -71,7 +71,6 @@ def whittaker_interpolation(im, xi, yi, r=3):
 
     for i in prange(n):
         for j in prange(m):
-
             xn = xi[i, j]
             yn = yi[i, j]
             xn_a = int(xn)

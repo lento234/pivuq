@@ -190,7 +190,6 @@ def disparity_ensemble_statistics(D, c, weights, wr, grid_size, coeff, ROI):
             j = jj * grid_size + grid_size // 2
             # Only calculate inside ROI
             if (i >= ROI[0]) and (i <= ROI[1]) and (j >= ROI[2]) and (j <= ROI[3]):
-
                 # Column bounds of windw
                 j0 = max(j - wr_eff, 0)
                 j1 = min(j + wr_eff, m * grid_size - 1)

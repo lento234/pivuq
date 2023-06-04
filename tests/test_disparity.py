@@ -5,7 +5,6 @@ import pivuq
 
 
 def test_ilk():
-
     frame_a = np.pad(np.ones((3, 3)), 2)
     frame_b = np.roll(frame_a, 1, axis=(0, 1))
 
